@@ -1,0 +1,33 @@
+<?php layout('layout/head'); ?>
+
+<h1>
+  Let's Rock.
+  <small>or <a href="<?php _url('/'); ?>">go back to home</a></small>
+</h1>
+
+<ul>
+  <li><a href="<?php _url('/rocks/add'); ?>">Add a rock</a></li>
+  <li><a href="<?php _url('/rocks/empty'); ?>">Delete all rocks</a></li>
+</ul>
+
+<?php if ($rocks): ?>
+  <table>
+    <thead> <tr> <th>#</th> <th>Display Name</th> <th>Nick Name</th> <th>Size</th> <th>Color</th> <th></th> </tr> </thead>
+    <tbody>
+      <?php foreach ($rocks as $rock): ?>
+        <tr>
+          <td><?php echo $rock->getId(); ?></td>
+          <td><?php echo esc($rock->getDisplayName()); ?></td>
+          <td><?php echo esc($rock->getNickName()); ?></td>
+          <td><?php echo esc($rock->getSize() ?: 'N/A'); ?></td>
+          <td><?php echo esc($rock->getColor() ?: 'N/A'); ?></td>
+          <td><a href="<?php _url('/rocks/' . $rock->getId() . '/delete'); ?>">Delete</a>
+        </tr>
+      <?php endforeach; ?>
+    </tbody>
+  </table>
+<?php else: ?>
+  <p>No rock created yet.</p>
+<?php endif; ?>
+
+<?php layout('layout/foot'); ?>

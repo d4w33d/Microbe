@@ -1,0 +1,7 @@
+<?php layout('layout/head'); ?>
+
+<h1>Hi There.</h1>
+<p>You can manage some things about your app, accessing <a href="<?php _url('/' . ($n = get_microbe_file_name())); ?>"><?php echo $n; ?></a>.</p>
+<p>If the database is ready, you can try to play with some <a href="<?php _url('/rocks'); ?>">rocks</a>...</p>
+
+<?php layout('layout/foot'); ?>

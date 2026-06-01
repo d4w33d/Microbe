@@ -1,0 +1,10 @@
+
+/web
+
+microbe.php
+VERSION.json
+
+sftp-config.json
+
+*.sublime-workspace
+*.sublime-project

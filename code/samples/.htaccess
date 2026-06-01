@@ -1,0 +1,27 @@
+<IfModule rewrite_module>
+
+    RewriteEngine On
+
+    # Maintenance mode:
+    # An empty "/MAINTENANCE" file located at root
+    # will allows us to load "/tpl/system/maintenance.php".
+    RewriteCond %{DOCUMENT_ROOT}/MAINTENANCE -f
+    RewriteCond %{REQUEST_URI} !^/assets(/.*)?$
+    RewriteCond %{REQUEST_URI} !^/microbe(\.[^/.]+)?.php(\?.*)?$
+    RewriteRule "^.*$" "maintenance.html" [L]
+
+    # Forbidden access
+    RewriteCond %{SCRIPT_FILENAME} -f
+    RewriteRule "^\.git(/.*)?$" "-" [F]
+    RewriteRule "^.*\.(txt|log|sql|ini|csv|tsv|json)$" "-" [F]
+    RewriteRule "^(ENV|composer\..*|(LICENSE|README)(\..*)?)$" "-" [F]
+    RewriteRule "^(ctrl|helpers|queries|tpl)(/.*)?$" "-" [F]
+    RewriteRule "^vendor(/.*)?$" "-" [F]
+
+    # Everything which doesn't exists goes to the index
+    RewriteCond %{SCRIPT_FILENAME} !-f
+    RewriteCond %{SCRIPT_FILENAME} !-d
+    RewriteCond %{SCRIPT_FILENAME} !-l
+    RewriteRule "^.*$" index.php [QSA]
+
+</IfModule>

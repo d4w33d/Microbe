@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title> <?php echo $subject; ?> </title>
+  </head>
+
+  <head>
+    <style>
+      .global { margin: 0; padding: 30px 0; background: #191919; }
+      .wrap { margin: 0 auto; max-width: calc(100% - 30px); width: 650px; background: #272727; color: #eee; font-family: Arial, sans-serif; font-size: .95rem; }
+      .head { border-bottom: 1px solid #00ff72; }
+      .brand { display: block; padding: 20px 0; text-decoration: none; text-align: center; }
+      .brand > strong { display: block; color: #00ff72; text-transform: uppercase; letter-spacing: .125rem; font-weight: bold; font-size: 1.75rem; transition: letter-spacing .25s; }
+      .brand > span { display: block; margin: 5px 0 0 0; color: #777; font-size: .9rem; font-weight: bold; }
+      .brand > img { display: block; margin: 0 auto 5px auto; width: 100px; transition: transform .25s; }
+      .brand:hover > strong { letter-spacing: .25rem; }
+      .brand:hover > img { transform: scaleX(-100%); }
+      .foot { padding: 20px; background: #00ff7211; border-top: 1px solid #00ff72; text-align: center; font-size: .9rem; }
+      .foot > a { display: inline-block; padding: 4px 6px; background: #00ff72; border-radius: 4px; color: #191919; text-decoration: none; font-weight: bold; transition: background-color .25s; }
+      .foot > a:hover { background: white; }
+      .content { padding: 35px; }
+      .cta { margin: 25px 0; padding: 30px; background: #00ff7211; border-radius: 4px; text-align: center; }
+      .cta > a { display: inline-block; padding: 15px 20px; background: #00ff72; border-radius: 4px; color: #191919; text-decoration: none; font-weight: bold; font-size: 1.25rem; transition: background-color .25s; }
+      .cta > a:hover { background: white; }
+    </style>
+  </head>
+
+  <body>
+    <div class="global">
+      <div class="wrap">
+        <div class="head">
+          <a href="<?php _url('/', host: true); ?>" class="brand" target="_blank">
+            <!-- <img src="<?php _url('/assets/img/logo.png', host: true); ?>" alt="" rel="notrack"> -->
+            <strong>Site Without Name</strong>
+            <span><?php _t("Sentence Describing This Site"); ?></span>
+          </a>
+        </div>
+        <div class="content">
