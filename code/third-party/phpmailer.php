@@ -2,7 +2,7 @@
 
 /**
  * -----------------------------------------------------------------------------------------------
- * | Microbe sincerely thanks PHPMailer authors / 2025-08-05T21:03:14+02:00                      |
+ * | Microbe sincerely thanks PHPMailer authors / 2026-06-15T17:17:51+00:00                      |
  * | Automatically scraped, tinkered without any refinement, then glued the following URLs:      |
  * |   - https://raw.githubusercontent.com/PHPMailer/PHPMailer/master/src/OAuthTokenProvider.php |
  * |   - https://raw.githubusercontent.com/PHPMailer/PHPMailer/master/src/OAuth.php              |
@@ -72,7 +72,7 @@ class Microbe_PHPMailer_OAuth implements Microbe_PHPMailer_OAuthTokenProvider
 }
 class Microbe_PHPMailer_SMTP
 {
-    const VERSION = '6.10.0';
+    const VERSION = '7.1.1';
     const LE = "\r\n";
     const DEFAULT_PORT = 25;
     const DEFAULT_SECURE_PORT = 465;
@@ -100,6 +100,7 @@ class Microbe_PHPMailer_SMTP
         'Haraka' => '/[\d]{3} Message Queued \((.*)\)/',
         'ZoneMTA' => '/[\d]{3} Message queued as (.*)/',
         'Mailjet' => '/[\d]{3} OK queued as (.*)/',
+        'Gsmtp' => '/[\d]{3} 2\.0\.0 OK (.*) - gsmtp/',
     ];
     public static $xclient_allowed_attributes = [
         'NAME', 'ADDR', 'PORT', 'PROTO', 'HELO', 'LOGIN', 'DESTADDR', 'DESTPORT'
@@ -351,7 +352,11 @@ class Microbe_PHPMailer_SMTP
                 if (null === $OAuth) {
                     return false;
                 }
-                $oauth = $OAuth->getOauth64();
+                try {
+                    $oauth = $OAuth->getOauth64();
+                } catch (\Exception $e) {
+                    throw new Exception("SMTP authentication error", 0, $e);
+                }
                 if ($oauth === '') {
                     if (!$this->sendCommand('AUTH', 'AUTH XOAUTH2 =', 235)) {
                         return false;
@@ -423,13 +428,30 @@ class Microbe_PHPMailer_SMTP
             $this->edebug('Connection: closed', self::DEBUG_CONNECTION);
         }
     }
+    private function iterateLines($s)
+    {
+        $start = 0;
+        $length = strlen($s);
+        for ($i = 0; $i < $length; $i++) {
+            $c = $s[$i];
+            if ($c === "\n" || $c === "\r") {
+                yield substr($s, $start, $i - $start);
+                if ($c === "\r" && $i + 1 < $length && $s[$i + 1] === "\n") {
+                    $i++;
+                }
+                $start = $i + 1;
+            }
+        }
+        yield substr($s, $start);
+    }
     public function data($msg_data)
     {
         if (!$this->sendCommand('DATA', 'DATA', 354)) {
             return false;
         }
-        $lines = explode("\n", str_replace(["\r\n", "\r"], "\n", $msg_data));
-        $field = substr($lines[0], 0, strpos($lines[0], ':'));
+        $lines = $this->iterateLines($msg_data);
+        $first_line = $lines->current();
+        $field = substr($first_line, 0, strpos($first_line, ':'));
         $in_headers = false;
         if (!empty($field) && strpos($field, ' ') === false) {
             $in_headers = true;
@@ -720,7 +742,13 @@ class Microbe_PHPMailer_SMTP
                     'SMTP -> get_lines(): select failed (' . $message . ')',
                     self::DEBUG_LOWLEVEL
                 );
-                if (stripos($message, 'interrupted system call') !== false) {
+                if (
+                    stripos($message, 'interrupted system call') !== false ||
+                    (
+                        defined('SOCKET_EINTR') &&
+                        stripos($message, 'stream_select(): Unable to select [' . SOCKET_EINTR . ']') !== false
+                    )
+                ) {
                     $this->edebug(
                         'SMTP -> get_lines(): retrying stream_select',
                         self::DEBUG_LOWLEVEL
@@ -872,6 +900,7 @@ class Microbe_PHPMailer_PHPMailer
     const ICAL_METHOD_REFRESH = 'REFRESH';
     const ICAL_METHOD_COUNTER = 'COUNTER';
     const ICAL_METHOD_DECLINECOUNTER = 'DECLINECOUNTER';
+    const RFC822_DATE_FORMAT = 'D, j M Y H:i:s O';
     public $Priority;
     public $CharSet = self::CHARSET_ISO88591;
     public $ContentType = self::CONTENT_TYPE_PLAINTEXT;
@@ -951,7 +980,7 @@ class Microbe_PHPMailer_PHPMailer
     protected $lastMessageID = '';
     protected $message_type = '';
     protected $boundary = [];
-    protected $language = [];
+    protected static $language = [];
     protected $error_count = 0;
     protected $sign_cert_file = '';
     protected $sign_key_file = '';
@@ -959,7 +988,7 @@ class Microbe_PHPMailer_PHPMailer
     protected $sign_key_pass = '';
     protected $exceptions = false;
     protected $uniqueid = '';
-    const VERSION = '6.10.0';
+    const VERSION = '7.1.1';
     const STOP_MESSAGE = 0;
     const STOP_CONTINUE = 1;
     const STOP_CRITICAL = 2;
@@ -1058,24 +1087,54 @@ class Microbe_PHPMailer_PHPMailer
     {
         $this->Mailer = 'mail';
     }
+    private function parseSendmailPath($sendmailPath)
+    {
+        $sendmailPath = trim((string)$sendmailPath);
+        if ($sendmailPath === '') {
+            return $sendmailPath;
+        }
+        $parts = preg_split('/\s+/', $sendmailPath);
+        if (empty($parts)) {
+            return $sendmailPath;
+        }
+        $command = array_shift($parts);
+        $remainder = [];
+        for ($i = 0; $i < count($parts); ++$i) {
+            $part = $parts[$i];
+            if (preg_match('/^-(i|oi|t)$/', $part, $matches)) {
+                continue;
+            }
+            if (preg_match('/^-f(.*)$/', $part, $matches)) {
+                $address = $matches[1];
+                if ($address === '' && isset($parts[$i + 1]) && strpos($parts[$i + 1], '-') !== 0) {
+                    $address = $parts[++$i];
+                }
+                $this->Sender = $address;
+                continue;
+            }
+            $remainder[] = $part;
+        }
+        if (!empty($remainder)) {
+            $command .= ' ' . implode(' ', $remainder);
+        }
+        return $command;
+    }
     public function isSendmail()
     {
         $ini_sendmail_path = ini_get('sendmail_path');
         if (false === stripos($ini_sendmail_path, 'sendmail')) {
-            $this->Sendmail = '/usr/sbin/sendmail';
-        } else {
-            $this->Sendmail = $ini_sendmail_path;
+            $ini_sendmail_path = '/usr/sbin/sendmail';
         }
+        $this->Sendmail = $this->parseSendmailPath($ini_sendmail_path);
         $this->Mailer = 'sendmail';
     }
     public function isQmail()
     {
         $ini_sendmail_path = ini_get('sendmail_path');
         if (false === stripos($ini_sendmail_path, 'qmail')) {
-            $this->Sendmail = '/var/qmail/bin/qmail-inject';
-        } else {
-            $this->Sendmail = $ini_sendmail_path;
+            $ini_sendmail_path = '/var/qmail/bin/qmail-inject';
         }
+        $this->Sendmail = $this->parseSendmailPath($ini_sendmail_path);
         $this->Mailer = 'qmail';
     }
     public function addAddress($address, $name = '')
@@ -1104,7 +1163,7 @@ class Microbe_PHPMailer_PHPMailer
         if (false === $pos) {
             $error_message = sprintf(
                 '%s (%s): %s',
-                $this->lang('invalid_address'),
+                self::lang('invalid_address'),
                 $kind,
                 $address
             );
@@ -1156,7 +1215,7 @@ class Microbe_PHPMailer_PHPMailer
         if (!in_array($kind, ['to', 'cc', 'bcc', 'Reply-To'])) {
             $error_message = sprintf(
                 '%s: %s',
-                $this->lang('Invalid recipient kind'),
+                self::lang('Invalid recipient kind'),
                 $kind
             );
             $this->setError($error_message);
@@ -1169,7 +1228,7 @@ class Microbe_PHPMailer_PHPMailer
         if (!static::validateAddress($address)) {
             $error_message = sprintf(
                 '%s (%s): %s',
-                $this->lang('invalid_address'),
+                self::lang('invalid_address'),
                 $kind,
                 $address
             );
@@ -1186,16 +1245,24 @@ class Microbe_PHPMailer_PHPMailer
                 $this->all_recipients[strtolower($address)] = true;
                 return true;
             }
-        } elseif (!array_key_exists(strtolower($address), $this->ReplyTo)) {
-            $this->ReplyTo[strtolower($address)] = [$address, $name];
+        } else {
+            foreach ($this->ReplyTo as $replyTo) {
+                if (0 === strcasecmp($replyTo[0], $address)) {
+                    return false;
+                }
+            }
+            $this->ReplyTo[] = [$address, $name];
             return true;
         }
         return false;
     }
-    public static function parseAddresses($addrstr, $useimap = true, $charset = self::CHARSET_ISO88591)
+    public static function parseAddresses($addrstr, $useimap = null, $charset = self::CHARSET_ISO88591)
     {
+        if ($useimap == true) {
+            trigger_error(self::lang('deprecated_argument') . '$useimap', E_USER_DEPRECATED);
+        }
         $addresses = [];
-        if ($useimap && function_exists('imap_rfc822_parse_adrlist')) {
+        if ($useimap == true && function_exists('imap_rfc822_parse_adrlist')) {
             $list = imap_rfc822_parse_adrlist($addrstr, '');
             imap_errors();
             foreach ($list as $address) {
@@ -1204,15 +1271,11 @@ class Microbe_PHPMailer_PHPMailer
                     static::validateAddress($address->mailbox . '@' . $address->host)
                 ) {
                     if (
-                        property_exists($address, 'personal') &&
-                        defined('MB_CASE_UPPER') &&
-                        preg_match('/^=\?.*\?=$/s', $address->personal)
+                        property_exists($address, 'personal')
+                        && is_string($address->personal)
+                        && $address->personal !== ''
                     ) {
-                        $origCharset = mb_internal_encoding();
-                        mb_internal_encoding($charset);
-                        $address->personal = str_replace('_', '=20', $address->personal);
-                        $address->personal = mb_decode_mimeheader($address->personal);
-                        mb_internal_encoding($origCharset);
+                        $address->personal = static::decodeHeader($address->personal, $charset);
                     }
                     $addresses[] = [
                         'name' => (property_exists($address, 'personal') ? $address->personal : ''),
@@ -1221,37 +1284,57 @@ class Microbe_PHPMailer_PHPMailer
                 }
             }
         } else {
-            $list = explode(',', $addrstr);
-            foreach ($list as $address) {
-                $address = trim($address);
-                if (strpos($address, '<') === false) {
-                    if (static::validateAddress($address)) {
-                        $addresses[] = [
-                            'name' => '',
-                            'address' => $address,
-                        ];
-                    }
-                } else {
-                    list($name, $email) = explode('<', $address);
-                    $email = trim(str_replace('>', '', $email));
-                    $name = trim($name);
-                    if (static::validateAddress($email)) {
-                        if (defined('MB_CASE_UPPER') && preg_match('/^=\?.*\?=$/s', $name)) {
-                            $origCharset = mb_internal_encoding();
-                            mb_internal_encoding($charset);
-                            $name = str_replace('_', '=20', $name);
-                            $name = mb_decode_mimeheader($name);
-                            mb_internal_encoding($origCharset);
-                        }
-                        $addresses[] = [
-                            'name' => trim($name, '\'" '),
-                            'address' => $email,
-                        ];
-                    }
+            $addresses = static::parseSimplerAddresses($addrstr, $charset);
+        }
+        return $addresses;
+    }
+    protected static function parseSimplerAddresses($addrstr, $charset)
+    {
+        trigger_error(self::lang('imap_recommended'), E_USER_NOTICE);
+        $addresses = [];
+        $list = explode(',', $addrstr);
+        foreach ($list as $address) {
+            $address = trim($address);
+            if (strpos($address, '<') === false) {
+                if (static::validateAddress($address)) {
+                    $addresses[] = [
+                        'name' => '',
+                        'address' => $address,
+                    ];
+                }
+            } else {
+                $parsed = static::parseEmailString($address);
+                $email = $parsed['email'];
+                if (static::validateAddress($email)) {
+                    $name = static::decodeHeader($parsed['name'], $charset);
+                    $addresses[] = [
+                        'name' => trim($name, '\'" '),
+                        'address' => $email,
+                    ];
                 }
             }
         }
         return $addresses;
+    }
+    private static function parseEmailString($input)
+    {
+        $input = trim((string)$input);
+        if ($input === '') {
+            return ['name' => '', 'email' => ''];
+        }
+        $pattern = '/^\s*(?:(?:"([^"]*)"|\'([^\']*)\'|([^<]*?))\s*)?<\s*([^>]+)\s*>\s*$/';
+        if (preg_match($pattern, $input, $matches)) {
+            $name = '';
+            if (isset($matches[1]) && $matches[1] !== '') {
+                $name = $matches[1];
+            } elseif (isset($matches[2]) && $matches[2] !== '') {
+                $name = $matches[2];
+            } elseif (isset($matches[3])) {
+                $name = trim($matches[3]);
+            }
+            return ['name' => $name, 'email' => trim($matches[4])];
+        }
+        return ['name' => '', 'email' => $input];
     }
     public function setFrom($address, $name = '', $auto = true)
     {
@@ -1268,7 +1351,7 @@ class Microbe_PHPMailer_PHPMailer
         ) {
             $error_message = sprintf(
                 '%s (From): %s',
-                $this->lang('invalid_address'),
+                self::lang('invalid_address'),
                 $address
             );
             $this->setError($error_message);
@@ -1401,7 +1484,7 @@ class Microbe_PHPMailer_PHPMailer
             && ini_get('mail.add_x_header') === '1'
             && stripos(PHP_OS, 'WIN') === 0
         ) {
-            trigger_error($this->lang('buggy_php'), E_USER_WARNING);
+            trigger_error(self::lang('buggy_php'), E_USER_WARNING);
         }
         try {
             $this->error_count = 0; //Reset errors
@@ -1422,7 +1505,7 @@ class Microbe_PHPMailer_PHPMailer
                 call_user_func_array([$this, 'addAnAddress'], $params);
             }
             if (count($this->to) + count($this->cc) + count($this->bcc) < 1) {
-                throw new Exception($this->lang('provide_address'), self::STOP_CRITICAL);
+                throw new Exception(self::lang('provide_address'), self::STOP_CRITICAL);
             }
             foreach (['From', 'Sender', 'ConfirmReadingTo'] as $address_kind) {
                 if ($this->{$address_kind} === null) {
@@ -1437,7 +1520,7 @@ class Microbe_PHPMailer_PHPMailer
                 if (!static::validateAddress($this->{$address_kind})) {
                     $error_message = sprintf(
                         '%s (%s): %s',
-                        $this->lang('invalid_address'),
+                        self::lang('invalid_address'),
                         $address_kind,
                         $this->{$address_kind}
                     );
@@ -1454,7 +1537,7 @@ class Microbe_PHPMailer_PHPMailer
             }
             $this->setMessageType();
             if (!$this->AllowEmpty && empty($this->Body)) {
-                throw new Exception($this->lang('empty_message'), self::STOP_CRITICAL);
+                throw new Exception(self::lang('empty_message'), self::STOP_CRITICAL);
             }
             $this->Subject = trim($this->Subject);
             $this->MIMEHeader = '';
@@ -1513,7 +1596,7 @@ class Microbe_PHPMailer_PHPMailer
                     return $this->mailSend($this->MIMEHeader, $this->MIMEBody);
                 default:
                     $sendMethod = $this->Mailer . 'Send';
-                    if (method_exists($this, $sendMethod)) {
+                    if (!empty($this->Mailer) && method_exists($this, $sendMethod)) {
                         return $this->{$sendMethod}($this->MIMEHeader, $this->MIMEBody);
                     }
                     return $this->mailSend($this->MIMEHeader, $this->MIMEBody);
@@ -1542,16 +1625,16 @@ class Microbe_PHPMailer_PHPMailer
         if (empty($this->Sender) && !empty($sendmail_from_value)) {
             $this->Sender = ini_get('sendmail_from');
         }
+        $sendmailArgs = [];
         if (!empty($this->Sender) && static::validateAddress($this->Sender) && self::isShellSafe($this->Sender)) {
-            if ($this->Mailer === 'qmail') {
-                $sendmailFmt = '%s -f%s';
-            } else {
-                $sendmailFmt = '%s -oi -f%s -t';
-            }
-        } else {
-            $sendmailFmt = '%s -oi -t';
+            $sendmailArgs[] = '-f' . $this->Sender;
         }
-        $sendmail = sprintf($sendmailFmt, escapeshellcmd($this->Sendmail), $this->Sender);
+        if ($this->Mailer !== 'qmail') {
+            $sendmailArgs[] = '-i';
+            $sendmailArgs[] = '-t';
+        }
+        $resultArgs = (empty($sendmailArgs) ? '' : ' ' . implode(' ', $sendmailArgs));
+        $sendmail = trim(escapeshellcmd($this->Sendmail) . $resultArgs);
         $this->edebug('Sendmail path: ' . $this->Sendmail);
         $this->edebug('Sendmail command: ' . $sendmail);
         $this->edebug('Envelope sender: ' . $this->Sender);
@@ -1560,33 +1643,35 @@ class Microbe_PHPMailer_PHPMailer
             foreach ($this->SingleToArray as $toAddr) {
                 $mail = @popen($sendmail, 'w');
                 if (!$mail) {
-                    throw new Exception($this->lang('execute') . $this->Sendmail, self::STOP_CRITICAL);
+                    throw new Exception(self::lang('execute') . $this->Sendmail, self::STOP_CRITICAL);
                 }
                 $this->edebug("To: {$toAddr}");
                 fwrite($mail, 'To: ' . $toAddr . "\n");
                 fwrite($mail, $header);
                 fwrite($mail, $body);
                 $result = pclose($mail);
-                $addrinfo = static::parseAddresses($toAddr, true, $this->CharSet);
-                $this->doCallback(
-                    ($result === 0),
-                    [[$addrinfo['address'], $addrinfo['name']]],
-                    $this->cc,
-                    $this->bcc,
-                    $this->Subject,
-                    $body,
-                    $this->From,
-                    []
-                );
+                $addrinfo = static::parseAddresses($toAddr, null, $this->CharSet);
+                foreach ($addrinfo as $addr) {
+                    $this->doCallback(
+                        ($result === 0),
+                        [[$addr['address'], $addr['name']]],
+                        $this->cc,
+                        $this->bcc,
+                        $this->Subject,
+                        $body,
+                        $this->From,
+                        []
+                    );
+                }
                 $this->edebug("Result: " . ($result === 0 ? 'true' : 'false'));
                 if (0 !== $result) {
-                    throw new Exception($this->lang('execute') . $this->Sendmail, self::STOP_CRITICAL);
+                    throw new Exception(self::lang('execute') . $this->Sendmail, self::STOP_CRITICAL);
                 }
             }
         } else {
             $mail = @popen($sendmail, 'w');
             if (!$mail) {
-                throw new Exception($this->lang('execute') . $this->Sendmail, self::STOP_CRITICAL);
+                throw new Exception(self::lang('execute') . $this->Sendmail, self::STOP_CRITICAL);
             }
             fwrite($mail, $header);
             fwrite($mail, $body);
@@ -1603,7 +1688,7 @@ class Microbe_PHPMailer_PHPMailer
             );
             $this->edebug("Result: " . ($result === 0 ? 'true' : 'false'));
             if (0 !== $result) {
-                throw new Exception($this->lang('execute') . $this->Sendmail, self::STOP_CRITICAL);
+                throw new Exception(self::lang('execute') . $this->Sendmail, self::STOP_CRITICAL);
             }
         }
         return true;
@@ -1660,7 +1745,8 @@ class Microbe_PHPMailer_PHPMailer
             $this->Sender = ini_get('sendmail_from');
         }
         if (!empty($this->Sender) && static::validateAddress($this->Sender)) {
-            if (self::isShellSafe($this->Sender)) {
+            $phpmailer_path = ini_get('sendmail_path');
+            if (self::isShellSafe($this->Sender) && strpos($phpmailer_path, ' -f') === false) {
                 $params = sprintf('-f%s', $this->Sender);
             }
             $old_from = ini_get('sendmail_from');
@@ -1670,17 +1756,19 @@ class Microbe_PHPMailer_PHPMailer
         if ($this->SingleTo && count($toArr) > 1) {
             foreach ($toArr as $toAddr) {
                 $result = $this->mailPassthru($toAddr, $this->Subject, $body, $header, $params);
-                $addrinfo = static::parseAddresses($toAddr, true, $this->CharSet);
-                $this->doCallback(
-                    $result,
-                    [[$addrinfo['address'], $addrinfo['name']]],
-                    $this->cc,
-                    $this->bcc,
-                    $this->Subject,
-                    $body,
-                    $this->From,
-                    []
-                );
+                $addrinfo = static::parseAddresses($toAddr, null, $this->CharSet);
+                foreach ($addrinfo as $addr) {
+                    $this->doCallback(
+                        $result,
+                        [[$addr['address'], $addr['name']]],
+                        $this->cc,
+                        $this->bcc,
+                        $this->Subject,
+                        $body,
+                        $this->From,
+                        []
+                    );
+                }
             }
         } else {
             $result = $this->mailPassthru($to, $this->Subject, $body, $header, $params);
@@ -1690,7 +1778,7 @@ class Microbe_PHPMailer_PHPMailer
             ini_set('sendmail_from', $old_from);
         }
         if (!$result) {
-            throw new Exception($this->lang('instantiate'), self::STOP_CRITICAL);
+            throw new Exception(self::lang('instantiate'), self::STOP_CRITICAL);
         }
         return true;
     }
@@ -1728,10 +1816,10 @@ class Microbe_PHPMailer_PHPMailer
         $header = static::stripTrailingWSP($header) . static::$LE . static::$LE;
         $bad_rcpt = [];
         if (!$this->smtpConnect($this->SMTPOptions)) {
-            throw new Exception($this->lang('smtp_connect_failed'), self::STOP_CRITICAL);
+            throw new Exception(self::lang('smtp_connect_failed'), self::STOP_CRITICAL);
         }
         if ($this->UseSMTPUTF8 && !$this->smtp->getServerExt('SMTPUTF8')) {
-            throw new Exception($this->lang('no_smtputf8'), self::STOP_CRITICAL);
+            throw new Exception(self::lang('no_smtputf8'), self::STOP_CRITICAL);
         }
         if ('' === $this->Sender) {
             $smtp_from = $this->From;
@@ -1742,7 +1830,7 @@ class Microbe_PHPMailer_PHPMailer
             $this->smtp->xclient($this->SMTPXClient);
         }
         if (!$this->smtp->mail($smtp_from)) {
-            $this->setError($this->lang('from_failed') . $smtp_from . ' : ' . implode(',', $this->smtp->getError()));
+            $this->setError(self::lang('from_failed') . $smtp_from . ' : ' . implode(',', $this->smtp->getError()));
             throw new Exception($this->ErrorInfo, self::STOP_CRITICAL);
         }
         $callbacks = [];
@@ -1759,7 +1847,7 @@ class Microbe_PHPMailer_PHPMailer
             }
         }
         if ((count($this->all_recipients) > count($bad_rcpt)) && !$this->smtp->data($header . $body)) {
-            throw new Exception($this->lang('data_not_accepted'), self::STOP_CRITICAL);
+            throw new Exception(self::lang('data_not_accepted'), self::STOP_CRITICAL);
         }
         $smtp_transaction_id = $this->smtp->getLastTransactionID();
         if ($this->SMTPKeepAlive) {
@@ -1785,7 +1873,7 @@ class Microbe_PHPMailer_PHPMailer
             foreach ($bad_rcpt as $bad) {
                 $errstr .= $bad['to'] . ': ' . $bad['error'];
             }
-            throw new Exception($this->lang('recipients_failed') . $errstr, self::STOP_CONTINUE);
+            throw new Exception(self::lang('recipients_failed') . $errstr, self::STOP_CONTINUE);
         }
         return true;
     }
@@ -1819,11 +1907,11 @@ class Microbe_PHPMailer_PHPMailer
                     $hostinfo
                 )
             ) {
-                $this->edebug($this->lang('invalid_hostentry') . ' ' . trim($hostentry));
+                $this->edebug(self::lang('invalid_hostentry') . ' ' . trim($hostentry));
                 continue;
             }
             if (!static::isValidHost($hostinfo[2])) {
-                $this->edebug($this->lang('invalid_host') . ' ' . $hostinfo[2]);
+                $this->edebug(self::lang('invalid_host') . ' ' . $hostinfo[2]);
                 continue;
             }
             $prefix = '';
@@ -1840,7 +1928,7 @@ class Microbe_PHPMailer_PHPMailer
             $sslext = defined('OPENSSL_ALGO_SHA256');
             if (static::ENCRYPTION_STARTTLS === $secure || static::ENCRYPTION_SMTPS === $secure) {
                 if (!$sslext) {
-                    throw new Exception($this->lang('extension_missing') . 'openssl', self::STOP_CRITICAL);
+                    throw new Exception(self::lang('extension_missing') . 'openssl', self::STOP_CRITICAL);
                 }
             }
             $host = $hostinfo[2];
@@ -1885,7 +1973,7 @@ class Microbe_PHPMailer_PHPMailer
                             $this->oauth
                         )
                     ) {
-                        throw new Exception($this->lang('authenticate'));
+                        throw new Exception(self::lang('authenticate'));
                     }
                     return true;
                 } catch (Exception $exc) {
@@ -1912,7 +2000,7 @@ class Microbe_PHPMailer_PHPMailer
             $this->smtp->close();
         }
     }
-    public function setLanguage($langcode = 'en', $lang_path = '')
+    public static function setLanguage($langcode = 'en', $lang_path = '')
     {
         $renamed_langcodes = [
             'br' => 'pt_br',
@@ -1931,7 +2019,7 @@ class Microbe_PHPMailer_PHPMailer
             'authenticate' => 'SMTP Error: Could not authenticate.',
             'buggy_php' => 'Your version of PHP is affected by a bug that may result in corrupted messages.' .
                 ' To fix it, switch to sending using SMTP, disable the mail.add_x_header option in' .
-                ' your php.ini, switch to MacOS or Linux, or upgrade your PHP to version 7.0.17+ or 7.1.3+.',
+                ' your php.ini, switch to macOS or Linux, or upgrade your PHP to version 7.0.17+ or 7.1.3+.',
             'connect_host' => 'SMTP Error: Could not connect to SMTP host.',
             'data_not_accepted' => 'SMTP Error: data not accepted.',
             'empty_message' => 'Message body empty',
@@ -1957,6 +2045,9 @@ class Microbe_PHPMailer_PHPMailer
             'smtp_error' => 'SMTP server error: ',
             'variable_set' => 'Cannot set or reset variable: ',
             'no_smtputf8' => 'Server does not support SMTPUTF8 needed to send to Unicode addresses',
+            'imap_recommended' => 'Using simplified address parser is not recommended. ' .
+                'Install the PHP IMAP extension for full RFC822 parsing.',
+            'deprecated_argument' => 'Deprecated Argument: ',
         ];
         if (empty($lang_path)) {
             $lang_path = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'language' . DIRECTORY_SEPARATOR;
@@ -2009,15 +2100,15 @@ class Microbe_PHPMailer_PHPMailer
                 }
             }
         }
-        $this->language = $PHPMAILER_LANG;
+        self::$language = $PHPMAILER_LANG;
         return $foundlang; //Returns false if language not found
     }
     public function getTranslations()
     {
-        if (empty($this->language)) {
-            $this->setLanguage(); // Set the default language.
+        if (empty(self::$language)) {
+            self::setLanguage(); // Set the default language.
         }
-        return $this->language;
+        return self::$language;
     }
     public function addrAppend($type, $addr)
     {
@@ -2161,7 +2252,10 @@ class Microbe_PHPMailer_PHPMailer
     public function createHeader()
     {
         $result = '';
-        $result .= $this->headerLine('Date', '' === $this->MessageDate ? self::rfcDate() : $this->MessageDate);
+        $result .= $this->headerLine(
+            'Date',
+            self::sanitiseDate($this->MessageDate)
+        );
         if ('mail' !== $this->Mailer) {
             if ($this->SingleTo) {
                 foreach ($this->to as $toaddr) {
@@ -2216,7 +2310,7 @@ class Microbe_PHPMailer_PHPMailer
                 'PHPMailer ' . self::VERSION . ' (https://github.com/PHPMailer/PHPMailer)'
             );
         } elseif (is_string($this->XMailer) && trim($this->XMailer) !== '') {
-            $result .= $this->headerLine('X-Mailer', trim($this->XMailer));
+            $result .= $this->headerLine('X-Mailer', $this->secureHeader(trim($this->XMailer)));
         } //Other values result in no X-Mailer header
         if ('' !== $this->ConfirmReadingTo) {
             $result .= $this->headerLine('Disposition-Notification-To', '<' . $this->ConfirmReadingTo . '>');
@@ -2255,9 +2349,16 @@ class Microbe_PHPMailer_PHPMailer
                 $result .= $this->textLine(' boundary="' . $this->boundary[1] . '"');
                 break;
             default:
-                $result .= $this->textLine('Content-Type: ' . $this->ContentType . '; charset=' . $this->CharSet);
+                $result .= $this->textLine(
+                    'Content-Type: ' .
+                    $this->secureHeader($this->ContentType) .
+                    '; charset=' . $this->secureHeader($this->CharSet)
+                );
                 $ismultipart = false;
                 break;
+        }
+        if (!$this->validateEncoding($this->Encoding)) {
+            throw new Exception(self::lang('encoding') . $this->Encoding);
         }
         if (static::ENCODING_7BIT !== $this->Encoding) {
             if ($ismultipart) {
@@ -2296,10 +2397,10 @@ class Microbe_PHPMailer_PHPMailer
     {
         $body = '';
         $this->setBoundaries();
-        if ($this->sign_key_file) {
-            $body .= $this->getMailMIME() . static::$LE;
-        }
         $this->setWordWrap();
+        if (!$this->validateEncoding($this->Encoding)) {
+            throw new Exception(self::lang('encoding') . $this->Encoding);
+        }
         $bodyEncoding = $this->Encoding;
         $bodyCharSet = $this->CharSet;
         if ($this->UseSMTPUTF8) {
@@ -2319,6 +2420,10 @@ class Microbe_PHPMailer_PHPMailer
         }
         if (static::ENCODING_BASE64 !== $altBodyEncoding && static::hasLineLongerThanMax($this->AltBody)) {
             $altBodyEncoding = static::ENCODING_QUOTED_PRINTABLE;
+        }
+        if ($this->sign_key_file) {
+            $this->Encoding = $bodyEncoding;
+            $body .= $this->getMailMIME() . static::$LE;
         }
         $mimepre = '';
         switch ($this->message_type) {
@@ -2497,12 +2602,12 @@ class Microbe_PHPMailer_PHPMailer
         if ($this->isError()) {
             $body = '';
             if ($this->exceptions) {
-                throw new Exception($this->lang('empty_message'), self::STOP_CRITICAL);
+                throw new Exception(self::lang('empty_message'), self::STOP_CRITICAL);
             }
         } elseif ($this->sign_key_file) {
             try {
                 if (!defined('PKCS7_TEXT')) {
-                    throw new Exception($this->lang('extension_missing') . 'openssl');
+                    throw new Exception(self::lang('extension_missing') . 'openssl');
                 }
                 $file = tempnam(sys_get_temp_dir(), 'srcsign');
                 $signed = tempnam(sys_get_temp_dir(), 'mailsign');
@@ -2535,7 +2640,7 @@ class Microbe_PHPMailer_PHPMailer
                     $body = $parts[1];
                 } else {
                     @unlink($signed);
-                    throw new Exception($this->lang('signing') . openssl_error_string());
+                    throw new Exception(self::lang('signing') . openssl_error_string());
                 }
             } catch (Exception $exc) {
                 $body = '';
@@ -2612,7 +2717,7 @@ class Microbe_PHPMailer_PHPMailer
     ) {
         try {
             if (!static::fileIsAccessible($path)) {
-                throw new Exception($this->lang('file_access') . $path, self::STOP_CONTINUE);
+                throw new Exception(self::lang('file_access') . $path, self::STOP_CONTINUE);
             }
             if ('' === $type) {
                 $type = static::filenameToType($path);
@@ -2622,7 +2727,7 @@ class Microbe_PHPMailer_PHPMailer
                 $name = $filename;
             }
             if (!$this->validateEncoding($encoding)) {
-                throw new Exception($this->lang('encoding') . $encoding);
+                throw new Exception(self::lang('encoding') . $encoding);
             }
             $this->attachment[] = [
                 0 => $path,
@@ -2735,11 +2840,11 @@ class Microbe_PHPMailer_PHPMailer
     {
         try {
             if (!static::fileIsAccessible($path)) {
-                throw new Exception($this->lang('file_open') . $path, self::STOP_CONTINUE);
+                throw new Exception(self::lang('file_open') . $path, self::STOP_CONTINUE);
             }
             $file_buffer = file_get_contents($path);
             if (false === $file_buffer) {
-                throw new Exception($this->lang('file_open') . $path, self::STOP_CONTINUE);
+                throw new Exception(self::lang('file_open') . $path, self::STOP_CONTINUE);
             }
             $file_buffer = $this->encodeString($file_buffer, $encoding);
             return $file_buffer;
@@ -2777,9 +2882,9 @@ class Microbe_PHPMailer_PHPMailer
                 $encoded = $this->encodeQP($str);
                 break;
             default:
-                $this->setError($this->lang('encoding') . $encoding);
+                $this->setError(self::lang('encoding') . $encoding);
                 if ($this->exceptions) {
-                    throw new Exception($this->lang('encoding') . $encoding);
+                    throw new Exception(self::lang('encoding') . $encoding);
                 }
                 break;
         }
@@ -2851,6 +2956,25 @@ class Microbe_PHPMailer_PHPMailer
                 return $str;
         }
         return trim(static::normalizeBreaks($encoded));
+    }
+    public static function decodeHeader($value, $charset = self::CHARSET_ISO88591)
+    {
+        if (!is_string($value) || $value === '') {
+            return '';
+        }
+        $hasEncodedWord = (bool) preg_match('/=\?.*\?=/s', $value);
+        if ($hasEncodedWord && defined('MB_CASE_UPPER')) {
+            $origCharset = mb_internal_encoding();
+            mb_internal_encoding($charset);
+            if (PHP_VERSION_ID < 80300) {
+                $value = str_replace('_', '=20', $value);
+            } else {
+                $value = preg_replace('/(\?=)\s+(=\?)/', '$1$2', $value);
+            }
+            $value = mb_decode_mimeheader($value);
+            mb_internal_encoding($origCharset);
+        }
+        return $value;
     }
     public function hasMultiBytes($str)
     {
@@ -2932,7 +3056,7 @@ class Microbe_PHPMailer_PHPMailer
                 $type = static::filenameToType($filename);
             }
             if (!$this->validateEncoding($encoding)) {
-                throw new Exception($this->lang('encoding') . $encoding);
+                throw new Exception(self::lang('encoding') . $encoding);
             }
             $this->attachment[] = [
                 0 => $string,
@@ -2964,13 +3088,13 @@ class Microbe_PHPMailer_PHPMailer
     ) {
         try {
             if (!static::fileIsAccessible($path)) {
-                throw new Exception($this->lang('file_access') . $path, self::STOP_CONTINUE);
+                throw new Exception(self::lang('file_access') . $path, self::STOP_CONTINUE);
             }
             if ('' === $type) {
                 $type = static::filenameToType($path);
             }
             if (!$this->validateEncoding($encoding)) {
-                throw new Exception($this->lang('encoding') . $encoding);
+                throw new Exception(self::lang('encoding') . $encoding);
             }
             $filename = (string) static::mb_pathinfo($path, PATHINFO_BASENAME);
             if ('' === $name) {
@@ -3009,7 +3133,7 @@ class Microbe_PHPMailer_PHPMailer
                 $type = static::filenameToType($name);
             }
             if (!$this->validateEncoding($encoding)) {
-                throw new Exception($this->lang('encoding') . $encoding);
+                throw new Exception(self::lang('encoding') . $encoding);
             }
             $this->attachment[] = [
                 0 => $string,
@@ -3034,7 +3158,7 @@ class Microbe_PHPMailer_PHPMailer
     protected function validateEncoding($encoding)
     {
         return in_array(
-            $encoding,
+            strtolower($encoding),
             [
                 self::ENCODING_7BIT,
                 self::ENCODING_QUOTED_PRINTABLE,
@@ -3162,7 +3286,7 @@ class Microbe_PHPMailer_PHPMailer
                 }
                 if (strpbrk($name . $value, "\r\n") !== false) {
                     if ($this->exceptions) {
-                        throw new Exception($this->lang('invalid_header'));
+                        throw new Exception(self::lang('invalid_header'));
                     }
                     return false;
                 }
@@ -3178,15 +3302,15 @@ class Microbe_PHPMailer_PHPMailer
         if ('smtp' === $this->Mailer && null !== $this->smtp) {
             $lasterror = $this->smtp->getError();
             if (!empty($lasterror['error'])) {
-                $msg .= ' ' . $this->lang('smtp_error') . $lasterror['error'];
+                $msg .= ' ' . self::lang('smtp_error') . $lasterror['error'];
                 if (!empty($lasterror['detail'])) {
-                    $msg .= ' ' . $this->lang('smtp_detail') . $lasterror['detail'];
+                    $msg .= ' ' . self::lang('smtp_detail') . $lasterror['detail'];
                 }
                 if (!empty($lasterror['smtp_code'])) {
-                    $msg .= ' ' . $this->lang('smtp_code') . $lasterror['smtp_code'];
+                    $msg .= ' ' . self::lang('smtp_code') . $lasterror['smtp_code'];
                 }
                 if (!empty($lasterror['smtp_code_ex'])) {
-                    $msg .= ' ' . $this->lang('smtp_code_ex') . $lasterror['smtp_code_ex'];
+                    $msg .= ' ' . self::lang('smtp_code_ex') . $lasterror['smtp_code_ex'];
                 }
             }
         }
@@ -3195,7 +3319,26 @@ class Microbe_PHPMailer_PHPMailer
     public static function rfcDate()
     {
         date_default_timezone_set(@date_default_timezone_get());
-        return date('D, j M Y H:i:s O');
+        return date(self::RFC822_DATE_FORMAT);
+    }
+    private static function sanitiseDate($date)
+    {
+        try {
+            date_default_timezone_set(@date_default_timezone_get());
+            if ($date instanceof \DateTimeInterface) {
+                $dt = $date;
+            } elseif (is_string($date) && $date !== '') {
+                $dt = new \DateTime($date);
+            } else {
+                return self::rfcDate();
+            }
+            if ($dt->getTimestamp() > time()) {
+                return self::rfcDate();
+            }
+            return $dt->format(self::RFC822_DATE_FORMAT);
+        } catch (\Exception $e) {
+            return self::rfcDate();
+        }
     }
     protected function serverHostname()
     {
@@ -3252,22 +3395,22 @@ class Microbe_PHPMailer_PHPMailer
     {
         return $this->UseSMTPUTF8;
     }
-    protected function lang($key)
+    protected static function lang($key)
     {
-        if (count($this->language) < 1) {
-            $this->setLanguage(); //Set the default language
+        if (count(self::$language) < 1) {
+            self::setLanguage(); //Set the default language
         }
-        if (array_key_exists($key, $this->language)) {
+        if (array_key_exists($key, self::$language)) {
             if ('smtp_connect_failed' === $key) {
-                return $this->language[$key] . ' https://github.com/PHPMailer/PHPMailer/wiki/Troubleshooting';
+                return self::$language[$key] . ' https://github.com/PHPMailer/PHPMailer/wiki/Troubleshooting';
             }
-            return $this->language[$key];
+            return self::$language[$key];
         }
         return $key;
     }
     private function getSmtpErrorMessage($base_key)
     {
-        $message = $this->lang($base_key);
+        $message = self::lang($base_key);
         $error = $this->smtp->getError();
         if (!empty($error['error'])) {
             $message .= ' ' . $error['error'];
@@ -3290,7 +3433,7 @@ class Microbe_PHPMailer_PHPMailer
         $value = (null === $value) ? '' : trim($value);
         if (empty($name) || strpbrk($name . $value, "\r\n") !== false) {
             if ($this->exceptions) {
-                throw new Exception($this->lang('invalid_header'));
+                throw new Exception(self::lang('invalid_header'));
             }
             return false;
         }
@@ -3303,6 +3446,10 @@ class Microbe_PHPMailer_PHPMailer
     }
     public function msgHTML($message, $basedir = '', $advanced = false)
     {
+        $cid_domain = 'phpmailer.0';
+        if (filter_var($this->From, FILTER_VALIDATE_EMAIL)) {
+            $cid_domain = substr($this->From, strrpos($this->From, '@') + 1);
+        }
         preg_match_all('/(?<!-)(src|background)=["\'](.*)["\']/Ui', $message, $images);
         if (array_key_exists(2, $images)) {
             if (strlen($basedir) > 1 && '/' !== substr($basedir, -1)) {
@@ -3318,7 +3465,7 @@ class Microbe_PHPMailer_PHPMailer
                     } else {
                         continue;
                     }
-                    $cid = substr(hash('sha256', $data), 0, 32) . '@phpmailer.0'; //RFC2392 S 2
+                    $cid = substr(hash('sha256', $data), 0, 32) . '@' . $cid_domain; //RFC2392 S 2
                     if (!$this->cidExists($cid)) {
                         $this->addStringEmbeddedImage(
                             $data,
@@ -3346,7 +3493,7 @@ class Microbe_PHPMailer_PHPMailer
                     if ('.' === $directory) {
                         $directory = '';
                     }
-                    $cid = substr(hash('sha256', $url), 0, 32) . '@phpmailer.0';
+                    $cid = substr(hash('sha256', $url), 0, 32) . '@' . $cid_domain;
                     if (strlen($basedir) > 1 && '/' !== substr($basedir, -1)) {
                         $basedir .= '/';
                     }
@@ -3564,7 +3711,7 @@ class Microbe_PHPMailer_PHPMailer
             $this->{$name} = $value;
             return true;
         }
-        $this->setError($this->lang('variable_set') . $name);
+        $this->setError(self::lang('variable_set') . $name);
         return false;
     }
     public function secureHeader($str)
@@ -3623,7 +3770,7 @@ class Microbe_PHPMailer_PHPMailer
     {
         if (!defined('PKCS7_TEXT')) {
             if ($this->exceptions) {
-                throw new Exception($this->lang('extension_missing') . 'openssl');
+                throw new Exception(self::lang('extension_missing') . 'openssl');
             }
             return '';
         }
