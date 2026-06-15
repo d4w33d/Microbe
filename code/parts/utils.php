@@ -246,7 +246,7 @@ function is_numeric_array(mixed $arr): bool
  *                                         array will stay in place.
  * @return array                           The array filtered.
  */
-function array_filter_recursive(array $arr, Closure $callback = null, bool $removeEmptyArrays = false): array
+function array_filter_recursive(array $arr, ?Closure $callback = null, bool $removeEmptyArrays = false): array
 {
     foreach ($arr as $key => &$value) {
         if (is_array($value)) {

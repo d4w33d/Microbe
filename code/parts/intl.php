@@ -738,7 +738,7 @@ function get_default_postcode_regex(): string
  *                                      default postcode regex will be used.
  * @return boolean                      Is valid or not?
  */
-function is_postcode_valid(mixed $postcode, object | string $country = null): bool
+function is_postcode_valid(mixed $postcode, object | string | null $country = null): bool
 {
     if ($country !== null && !($country = get_country($country))) throw new Microbe_Exception("Invalid country while trying to validate postcode");
     if (!is_scalar($postcode)) return false;
@@ -754,7 +754,7 @@ function is_postcode_valid(mixed $postcode, object | string $country = null): bo
  * @return string|null              Phone number formatted, or null if
  *                                  invalid format.
  */
-function cast_phone_number(mixed $number, string | int $dialingCode = null): ?string
+function cast_phone_number(mixed $number, string | int | null $dialingCode = null): ?string
 {
     if (!is_scalar($number)) return null;
     $number = preg_replace('/[^\d+-]/', '', (string) $number);

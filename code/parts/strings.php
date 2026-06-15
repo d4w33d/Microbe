@@ -588,7 +588,7 @@ function create_word(int $minSyllables = 7, int $maxSyllables = 9, bool $exclude
  * @param  bool        $excludeConfusing Exclude confusing letters or not.
  * @return string                        The letter.
  */
-function get_letter(string $type = null, bool $excludeConfusing = false): string
+function get_letter(?string $type = null, bool $excludeConfusing = false): string
 {
     $vowels = $excludeConfusing ? 'aeuy' : 'aeiouy';
     $consonants = $excludeConfusing ? 'bcdfghjkmnpqrstvwxz' : 'bcdfghjklmnpqrstvwxz';
@@ -667,7 +667,7 @@ function get_random_name(?string $gender = null): object
 
     return (object) [
         'gender'    => $gender,
-        'firstname' => $firstname = $$gender[mt_rand(0, count($$gender) - 1)],
+        'firstname' => $firstname = ${$gender[mt_rand(0, count($$gender) - 1)]},
         'lastname'  => $lastname = $lastnames[mt_rand(0, count($lastnames) - 1)],
         'name'      => $firstname . ' ' . $lastname,
     ];
@@ -829,7 +829,7 @@ function increment_str(string $str, string $prefix = '', string $suffix = '', ?C
  * @return array|string        An array with the string parts, or a string with
  *                             those parts joined with $joint.
  */
-function explode_case(string $str, string $joint = null): array | string
+function explode_case(string $str, ?string $joint = null): array | string
 {
     if (!preg_match('/[a-z]/', $str)) return [ $str ];
     $str = preg_replace('/([a-z])([A-Z])/', '$1 $2', $str);
@@ -994,7 +994,7 @@ function parse_search_query(string $q): object
 // ==={ Fallback Functions }====================================================
 
 if (!function_exists('mb_ucfirst') && function_exists('mb_strtoupper')) {
-    function mb_ucfirst(string $str, string $encoding = null): string
+    function mb_ucfirst(string $str, ?string $encoding = null): string
     {
         if ($encoding === null) $encoding = mb_internal_encoding();
         return mb_strtoupper(mb_substr($str, 0, 1, $encoding), $encoding) . mb_substr($str, 1, null, $encoding);

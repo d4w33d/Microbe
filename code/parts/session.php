@@ -87,7 +87,7 @@ function get_flash_vars(): array
  *                            If false (default), the given $vars will be
  *                            merged into the current variables.
  */
-function set_flash_vars(array $vars = null, bool $replace = false): void
+function set_flash_vars(?array $vars = null, bool $replace = false): void
 {
     if ($replace === false) {
         foreach ($vars as $k => $v) set_flash_var($k, $v);
@@ -155,7 +155,7 @@ function get_flash_var(string $name, bool $delete = true): mixed
  * @param  integer $type  Type of the message.
  *                        Should be one of the MB_FLASH_MSG_* constants.
  */
-function push_flash_message(string $msg = null, string $name = '*', int $type = MB_FLASH_MSG_DEFAULT): void
+function push_flash_message(?string $msg = null, string $name = '*', int $type = MB_FLASH_MSG_DEFAULT): void
 {
     $name = '_messages.' . $name;
     if (!$msg) return;

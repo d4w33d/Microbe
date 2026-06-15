@@ -99,7 +99,7 @@ function dec_lon_to_dms(float $dec, bool $asString = true, int $round = 6, bool 
  * @param  int|null $radius Radius in meters.
  * @return object           Coordinates box.
  */
-function get_coordinates_box(float $lat, float $lon, int $radius = null): object
+function get_coordinates_box(float $lat, float $lon, ?int $radius = null): object
 {
     $box = (object) [
         'center' => (object) [ 'lat' => ($lat = (float) $lat), 'lon' => ($lon = (float) $lon) ],

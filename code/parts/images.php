@@ -379,8 +379,7 @@ function generate_random_image(
             $pts[] = mt_rand(0, $width);
             $pts[] = mt_rand(0, $height);
         }
-        $num = count($pts) / 2;
-        imagefilledpolygon($im, $pts, $num, $color);
+        imagefilledpolygon($im, $pts, $color);
     };
 
     $randomArc = function() use ($im, $width, $height, $randomColorAlpha): void
@@ -403,10 +402,10 @@ function generate_random_image(
     imagefilter($im, IMG_FILTER_SCATTER, 6, 10);
 
     if ($bg) {
-        imagefilledpolygon($im, [ 0, 0, $width, 0, $width, $height * (mt_rand(3, 11) / 100), 0, $height * (mt_rand(3, 11) / 100) ], 4, $bg);
-        imagefilledpolygon($im, [ 0, $height, $width, $height, $width, $height - ($height * (mt_rand(3, 11) / 100)), 0, $height - ($height * (mt_rand(3, 11) / 100)) ], 4, $bg);
-        imagefilledpolygon($im, [ 0, 0, $width * (mt_rand(3, 11) / 100), 0, $width * (mt_rand(3, 11) / 100), $height, 0, $height ], 4, $bg);
-        imagefilledpolygon($im, [ $width, 0, $width, $height, $width - ($width * (mt_rand(3, 11) / 100)), $height, $width - ($width * (mt_rand(3, 11) / 100)), 0 ], 4, $bg);
+        imagefilledpolygon($im, [ 0, 0, $width, 0, $width, $height * (mt_rand(3, 11) / 100), 0, $height * (mt_rand(3, 11) / 100) ], $bg);
+        imagefilledpolygon($im, [ 0, $height, $width, $height, $width, $height - ($height * (mt_rand(3, 11) / 100)), 0, $height - ($height * (mt_rand(3, 11) / 100)) ], $bg);
+        imagefilledpolygon($im, [ 0, 0, $width * (mt_rand(3, 11) / 100), 0, $width * (mt_rand(3, 11) / 100), $height, 0, $height ], $bg);
+        imagefilledpolygon($im, [ $width, 0, $width, $height, $width - ($width * (mt_rand(3, 11) / 100)), $height, $width - ($width * (mt_rand(3, 11) / 100)), 0 ], $bg);
     }
 
     imagefilter($im, IMG_FILTER_BRIGHTNESS, -25);
@@ -416,7 +415,7 @@ function generate_random_image(
 
     if ($output === 'write') {
         imagewebp($im, $path);
-        imagedestroy($im);
+        unset($im);
         return null;
     }
 
@@ -424,7 +423,7 @@ function generate_random_image(
     else if ($output === 'display') header('Content-type: image/webp');
 
     imagewebp($im);
-    imagedestroy($im);
+    unset($im);
 
     if ($output === 'display') return null;
 

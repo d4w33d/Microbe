@@ -356,7 +356,7 @@ function get_asset_path(string $path): string
  * @return string | null         Returns the HTML string, or null if $return
  *                               is false.
  */
-function include_asset(string $path, string $name = null, ?array $attrs = null, bool $return = false): ?string
+function include_asset(string $path, ?string $name = null, ?array $attrs = null, bool $return = false): ?string
 {
     if ($name && !is_asset_required($name)) return $return ? '' : null;
     $path = get_asset_path($path);
@@ -593,12 +593,7 @@ function preprocess_assets(bool $force = false): void
  * @param bool  $cached Always use the cache if the files were unchanged,
  *                      or regenerate it each time.
  */
-function require_js(
-    array $files,
-    bool  $bind   = null,
-    bool  $minify = null,
-    bool  $cached = null,
-): void
+function require_js(array $files, ?bool $bind = null, ?bool $minify = null, ?bool $cached = null): void
 {
     if ($bind === null) $bind = !is_env('dev');
     if ($minify === null) $minify = $bind;
@@ -719,7 +714,7 @@ function get_css_units(): array
  *                         will be considerated as a square of $w x $w.
  * @param  float    $scale Optional scale to apply on se size (default 1).
  */
-function size_attr(int $w, int $h = null, float $scale = 1): void
+function size_attr(int $w, ?int $h = null, float $scale = 1): void
 {
     if ($h === null) $h = $w;
     $ratio = $h / $w;
@@ -808,7 +803,7 @@ function json_error(string | array $error = 'unknown', array $data = [], int $co
  * Display a JSON error "unauthorized" with an optional message.
  * @param  string $message  Error message.
  */
-function json_403(string $message = null): void
+function json_403(?string $message = null): void
 {
     json_error('unauthorized', $message ? [ 'message' => $message ] : []);
 }
@@ -818,7 +813,7 @@ function json_403(string $message = null): void
  * Display a JSON error "not_found" with an optional message.
  * @param  string $message  Error message.
  */
-function json_404(string $message = null): void
+function json_404(?string $message = null): void
 {
     json_error('not_found', $message ? [ 'message' => $message ] : []);
 }
@@ -828,7 +823,7 @@ function json_404(string $message = null): void
  * Display a JSON error "internal_error" with an optional message.
  * @param  string $message  Error message.
  */
-function json_500(string $message = null): void
+function json_500(?string $message = null): void
 {
     json_error('internal_error', $message ? [ 'message' => $message ] : []);
 }
@@ -866,11 +861,11 @@ function redirect(string $url, array $vars = [], int $code = 302): void
  *                             message's code.
  */
 function message(
-    string $html   = null,
-    string $type   = 'info',
-    string $title  = null,
-    string $text   = null,
-    string $before = null,
+    ?string $html   = null,
+    string  $type   = 'info',
+    ?string $title  = null,
+    ?string $text   = null,
+    ?string $before = null,
 ): void
 {
     $types = [

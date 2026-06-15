@@ -245,9 +245,9 @@ function is_expired(string | int | DateTimeInterface $what, string | int | DateI
  */
 function get_time_ago(
     DateTimeInterface | string | int $dt,
-    DateTimeInterface                $now        = null,
+    ?DateTimeInterface               $now        = null,
     bool                             $full       = false,
-    int | string                     $limit      = null,
+    int | string | null              $limit      = null,
     bool                             $lower      = false,
     bool                             $translate  = true,
     string                           $textFormat = '{time} ago',
@@ -323,9 +323,9 @@ function get_time_ago(
  */
 function get_time_remaining(
     DateTimeInterface | string | int $dt,
-    DateTimeInterface                $now       = null,
+    ?DateTimeInterface               $now       = null,
     bool                             $full      = false,
-    int | string                     $limit     = null,
+    int | string | null              $limit     = null,
     bool                             $lower     = false,
     bool                             $translate = true,
 ): ?string

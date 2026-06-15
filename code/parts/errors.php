@@ -20,7 +20,7 @@ class Microbe_Exception extends Exception {}
  *                                 environment is not in this list, the
  *                                 callback will not be called.
  */
-function register_custom_error_handler(int $errorCode, Closure $func, array $environments = null): void
+function register_custom_error_handler(int $errorCode, Closure $func, ?array $environments = null): void
 {
     if ($environments !== null && !in_array(get_env(), $environments)) {
         return;
@@ -285,7 +285,7 @@ function throw_500(array $err = [], bool $isExternal = false, ?string $message =
  * @param  int|null    $line Line number.
  * @return string|null       Formated file path and line number.
  */
-function html_backtrace_file_path(string $path = null, int $line = null): ?string
+function html_backtrace_file_path(?string $path = null, ?int $line = null): ?string
 {
     if ($path === null || $path === '') return null;
 
@@ -304,7 +304,7 @@ function html_backtrace_file_path(string $path = null, int $line = null): ?strin
  * <register_shutdown_function>.
  * @param  Exception|Error|int|null $exception Error, exception or exit code.
  */
-function handle_error(Exception | Error | int $exception = null): void
+function handle_error(Exception | Error | int | null $exception = null): void
 {
     if (!($exception instanceof Exception)
         && !($exception instanceof Error)

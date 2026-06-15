@@ -96,7 +96,7 @@ function apply_url_modifiers(string $path): string
  *                                (aka the path given as first argument
  *                                of <route>).
  */
-function register_route_filter(Closure $callback = null): void
+function register_route_filter(?Closure $callback = null): void
 {
     $filters = get_route_filters();
     $filters[] = $callback;
@@ -321,7 +321,7 @@ function route(string | array $path, Closure $callback): void
  *                                path ':back'.
  * @return string                 Computed URL.
  */
-function url(string $path = '/', array | bool $args = [], bool $host = false, string $fallback = null): string
+function url(string $path = '/', array | bool $args = [], bool $host = false, ?string $fallback = null): string
 {
     if ($path === '.') { // Current path
         $path = get_relative_url();
@@ -417,7 +417,7 @@ function url(string $path = '/', array | bool $args = [], bool $host = false, st
  *                                path ':back'.
  * @return string                 Computed URL.
  */
-function _url(string $path = '/', array | bool $args = [], bool $host = false, string $fallback = null): string
+function _url(string $path = '/', array | bool $args = [], bool $host = false, ?string $fallback = null): string
 {
     echo $url = url(path: $path, args: $args, host: $host, fallback: $fallback);
     return $url;
@@ -433,7 +433,7 @@ function _url(string $path = '/', array | bool $args = [], bool $host = false, s
  *                                path ':back'.
  * @return string                 Computed URL.
  */
-function __url(string $path = '/', array | bool $args = [], bool $host = false, string $fallback = null): string
+function __url(string $path = '/', array | bool $args = [], bool $host = false, ?string $fallback = null): string
 {
     echo $url = esc(url(path: $path, args: $args, host: $host, fallback: $fallback));
     return $url;

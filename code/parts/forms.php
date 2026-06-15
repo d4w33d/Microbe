@@ -702,38 +702,38 @@ class Microbe_Form_Field extends Microbe_Form_Element
 
     public function addClass(string $className, string $target = 'root'): static
     {
-        $this->classes->$target[] = $className;
+        $this->classes->{$target}[] = $className;
         return $this;
     }
 
     public function clearClasses(string $target = 'root'): static
     {
-        $this->classes->$target = [];
+        $this->classes->{$target} = [];
         return $this;
     }
 
     public function getClasses(string $target = 'root', bool $asString = false): array | string
     {
-        $cl = $this->classes->$target ?? [];
+        $cl = $this->classes->{$target} ?? [];
         return $asString ? $cl : implode(' ', $cl);
     }
 
     public function setCustomAttribute(string $key, string | bool | int | float $value, string $target = 'root'): static
     {
-        if ($value !== false) $this->customAttrs->$target[$key] = $value;
-        else if (array_key_exists($key, $this->customAttrs->$target)) unset($this->customAttrs->$target[$key]);
+        if ($value !== false) $this->customAttrs->{$target}[$key] = $value;
+        else if (array_key_exists($key, $this->customAttrs->{$target})) unset($this->customAttrs->{$target}[$key]);
         return $this;
     }
 
     public function clearCustomAttributes(string $target = 'root'): static
     {
-        $this->customAttrs->$target = [];
+        $this->customAttrs->{$target} = [];
         return $this;
     }
 
     public function getCustomAttributes(string $target = 'root'): array | string
     {
-        return $this->customAttrs->$target;
+        return $this->customAttrs->{$target};
     }
 
     public function addChoice(string | int | float $value, ?string $label = null, ?string $icon = null): static

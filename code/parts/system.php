@@ -79,7 +79,7 @@ function exec_php_file(
  * @return bool|string             False is something goes wrong. Else, the
  *                                 full output of the execution of the command.
  */
-function exec_in_out(string $cmd, array $expect = [], string $ending = null, bool $showOutput = false): bool | string
+function exec_in_out(string $cmd, array $expect = [], ?string $ending = null, bool $showOutput = false): bool | string
 {
     $log = [];
 

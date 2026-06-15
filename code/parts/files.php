@@ -126,7 +126,7 @@ function hashed_filename(string $str, ?string $ext = null): string
  *                               for PHP or server configuration.
  * @return string                Number suffixed with the proper unit.
  */
-function bytes_unit(int | float $size, string $from = 'B', string $to = null, bool $asConfig = false): string
+function bytes_unit(int | float $size, string $from = 'B', ?string $to = null, bool $asConfig = false): string
 {
          if ($from === 'KB') $size *= 1000;
     else if ($from === 'MB') $size *= 1000 * 1000;
@@ -357,7 +357,7 @@ function get_file_name_parts(string $f, bool $includingDot = true): array
  * @param  string|null $ctx Context.
  * @return int              Maximum upload size in bytes.
  */
-function get_max_upload_size(string $ctx = null): int
+function get_max_upload_size(?string $ctx = null): int
 {
     $size = min(
         size_string_to_bytes(ini_get('post_max_size')),
@@ -631,7 +631,7 @@ function get_folder_size(string $path, bool $readable = false): int | string
  * @param  string|null  $rootDir    Path to the original directory (the
  *                                  initial value of $dir).
  */
-function rrmdir(string $dir, bool $deleteRoot = true, Closure $filter = null, string $rootDir = null): void
+function rrmdir(string $dir, bool $deleteRoot = true, ?Closure $filter = null, ?string $rootDir = null): void
 {
     if ($rootDir === null) $rootDir = $dir;
     if (!is_dir($dir)) return;
@@ -686,7 +686,7 @@ function shortify_file_name(string $name, ?int $maxLength = null, string $replac
  * Send a file to the browser, with proper headers to force the download.
  * @param  string $path Path to the file
  */
-function force_download(string $path, string $name = null): void
+function force_download(string $path, ?string $name = null): void
 {
     header('Content-Type: ' . mime_content_type(basename($path)));
     header('Content-Disposition: attachment; filename="' . ($name ?: basename($path)) . '"');
