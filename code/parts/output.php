@@ -68,28 +68,32 @@ function get_template_var(string $key): mixed
  *     relative to the '/tpl' directory.
  *   - If the path doesn't has a recognized extension
  *     (phtml, php, html or htm), the path will be suffixed with '.phtml';
- * @param  string      $tpl              Template name/path.
- * @param  array       $vars             Variables to inject to the template.
- *                                       They will be merged to the global
- *                                       template variables.
- * @param  bool        $return           Returns the result as a string
- *                                       if true. Else, it will be echoed.
- * @param  bool        $preprocessAssets Preprocess the assets if needed,
- *                                       depending on the configuration.
- *                                       If false, the assets preprocessing
- *                                       will be fully skipped.
- * @param  bool        $dispatchEvents   Dispatch the events or not.
- * @param  bool        $throwMissing     Throw an error when the template file
- *                                       is missing.
- * @param  bool        $close            Exit the code with <close()> after
- *                                       rendering.
- * @param  bool        $ajax             Outputs a JSON oject containing the
- *                                       HTML and the underscored variables.
- *                                       Can be a boolean or 'auto'.
- * @param  bool        $updateGlobalVars Update global template vars with $vars.
- * @param  bool        $loadGlobalVars   Load global template into template.
- * @return string|null                   If $return is true, the template
- *                                       result.
+ * @param  string            $tpl              Template name/path.
+ * @param  array             $vars             Variables to inject to the
+ *                                             template. They will be merged
+ *                                             to the global template variables.
+ * @param  bool              $return           Returns the result as a string
+ *                                             if true. Else, it will be echoed.
+ * @param  bool              $preprocessAssets Preprocess the assets if needed,
+ *                                             depending on the configuration.
+ *                                             If false, the assets
+ *                                             preprocessing will be fully
+ *                                             skipped.
+ * @param  bool              $dispatchEvents   Dispatch the events or not.
+ * @param  bool              $throwMissing     Throw an error when the template
+ *                                             file is missing.
+ * @param  bool              $close            Exit the code with <close()>
+ *                                             after rendering.
+ * @param  bool              $ajax             Outputs a JSON oject containing
+ *                                             the HTML and the underscored
+ *                                             variables.
+ *                                             Can be a boolean or 'auto'.
+ * @param  bool              $updateGlobalVars Update global template vars
+ *                                             with $vars.
+ * @param  bool              $loadGlobalVars   Load global template into
+ *                                             template.
+ * @return string|null|false                   If $return is true, the template
+ *                                             result.
  */
 function render(
     string        $tpl,
@@ -102,7 +106,7 @@ function render(
     string | bool $ajax             = false,
     bool          $updateGlobalVars = true,
     bool          $loadGlobalVars   = true,
-): ?string
+): string | null | false
 {
     $previousLocale = get_translations_locale();
 
@@ -147,7 +151,7 @@ function render(
                 $tpl = $bundle->synonym[1] . '/' . $bundle->name . '/templates/' . $m['suffix'];
             }
             if (!is_file($path = ($tpl[0] === '/' ? $tpl : join_path(get_root_dir(), $tpl)))) {
-                if (!$throwMissing) return null;
+                if (!$throwMissing) return false;
                 throw new Microbe_Exception("Template {$path} doesn't exists");
             }
         }
