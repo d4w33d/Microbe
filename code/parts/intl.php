@@ -313,7 +313,7 @@ function _t(
  * @param  string|null  $fromLocale Locale to be translated to.
  * @param  string|null  $toLocale   MMMMMMM.
  */
-function __t(
+function _h_t(
     string | array $format,
     array | string $vars       = [],
     ?string        $fromLocale = null,

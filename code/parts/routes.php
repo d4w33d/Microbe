@@ -433,7 +433,7 @@ function _url(string $path = '/', array | bool $args = [], bool $host = false, ?
  *                                path ':back'.
  * @return string                 Computed URL.
  */
-function __url(string $path = '/', array | bool $args = [], bool $host = false, ?string $fallback = null): string
+function _h_url(string $path = '/', array | bool $args = [], bool $host = false, ?string $fallback = null): string
 {
     echo $url = esc(url(path: $path, args: $args, host: $host, fallback: $fallback));
     return $url;

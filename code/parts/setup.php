@@ -29,7 +29,7 @@ function setup_config(): void
  */
 function setup_tree(): void
 {
-    foreach (__get_samples_dirs() as $d) {
+    foreach (mb_core__get_samples_dirs() as $d) {
         $ad = get_path($d);
         if (!is_dir($ad)) mkdir($ad, get_mkdir_chmod(), true);
     }
@@ -40,7 +40,7 @@ function setup_tree(): void
  */
 function setup_samples(): void
 {
-    foreach (__get_samples_files() as $f => $encoded) {
+    foreach (mb_core__get_samples_files() as $f => $encoded) {
         $af = get_path($f);
         if (!is_dir($ad = dirname($af))) mkdir($ad, get_mkdir_chmod(), true);
         file_put_contents($af, base64_decode($encoded));

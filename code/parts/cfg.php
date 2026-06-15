@@ -178,7 +178,7 @@ function _cfg(string $var): void
  * Echo an escaped configuration value
  * @param  string $var   Entry name, like in <cfg()>.
  */
-function __cfg(string $var): void
+function _h_cfg(string $var): void
 {
     echo esc(cfg($var) ?: '');
 }
@@ -261,7 +261,7 @@ function _db_cfg(string $name): void
  * Echo an escaped configuration value from database key/value table.
  * @param  string $name  Key of the entry to get or set.
  */
-function __db_cfg(string $name): void
+function _h_db_cfg(string $name): void
 {
     echo esc(db_cfg($name) ?: '');
 }

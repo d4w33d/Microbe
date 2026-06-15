@@ -366,7 +366,7 @@ abstract class Microbe_Processor implements Microbe_Processor_Interface
 
         $bind[] = '// =============================================================================';
         $bind[] = '';
-        $bind[] = 'function __get_samples_dirs(): array';
+        $bind[] = 'function mb_core__get_samples_dirs(): array';
         $bind[] = '{';
         $bind[] = '    return [';
         foreach ($samples->folders as $f) $bind[] = "        '{$f}',";
@@ -374,7 +374,7 @@ abstract class Microbe_Processor implements Microbe_Processor_Interface
         $bind[] = '}';
 
         $bind[] = '';
-        $bind[] = 'function __get_samples_files(): array';
+        $bind[] = 'function mb_core__get_samples_files(): array';
         $bind[] = '{';
         $bind[] = '    return [';
         foreach ($samples->files as $fName => $fEncoded) $bind[] = "        '{$fName}' => '" . $fEncoded . "',";
