@@ -915,7 +915,7 @@ function dev_render_console(array $vars): void
                                 <dl>
                                     <dt>Root URL</dt> <dd><code><?php _url('/', true); ?></code> <a href="<?php _url('/', true); ?>" target="_blank" class="ico">&#x2197;</a></dd>
                                     <dt>Root Directory</dt> <dd><code><?php echo get_root_dir(); ?></code></dd>
-                                    <dt>App Name</dt> <dd><code><?php __cfg('~@app.name'); ?></code></dd>
+                                    <dt>App Name</dt> <dd><code><?php _h_cfg('~@app.name'); ?></code></dd>
                                 </dl>
                             </fieldset>
 
@@ -1484,8 +1484,8 @@ function dev_render_console(array $vars): void
                                 <div class="inline-form-container">
                                     <div>Send Test Email</div>
                                     <form action="<?php _url('./', [ 'do' => 'emails.test' ]); ?>" class="inline-form" method="post">
-                                        <div>   <span>to =</span>      <input type="text" name="to" spellcheck="false" value="<?php __cfg('~@emails.addresses.to.address'); ?>" placeholder="jane.doe@domain.tld"> </div>
-                                        <div> ; <span>subject =</span> <input type="text" name="subject" spellcheck="false" value="Email Test From <?php __cfg('~@app.name'); ?>" placeholder="Some Subject"> </div>
+                                        <div>   <span>to =</span>      <input type="text" name="to" spellcheck="false" value="<?php _h_cfg('~@emails.addresses.to.address'); ?>" placeholder="jane.doe@domain.tld"> </div>
+                                        <div> ; <span>subject =</span> <input type="text" name="subject" spellcheck="false" value="Email Test From <?php _h_cfg('~@app.name'); ?>" placeholder="Some Subject"> </div>
                                         <div> ; <span>message =</span> <input type="text" name="message" spellcheck="false" value="Hello World!" placeholder="Hello World!"> </div>
                                         <button type="submit" name="mode" value="preview">Preview</button>
                                         <button type="submit" name="mode" value="send">Send</button>
