@@ -23,9 +23,9 @@
 function cookie(
     string  $name,
     mixed   $value    = null,
-    int     $lifetime = null,
-    string  $samesite = null,
-    bool    $secure   = null,
+    ?int    $lifetime = null,
+    ?string $samesite = null,
+    ?bool   $secure   = null,
     bool    $httponly = false,
     ?string $domain   = null,
 ): mixed

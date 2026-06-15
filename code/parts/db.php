@@ -110,7 +110,7 @@ function db_is_connected(string $ref = 'main'): bool
  * @return int          The PDO::PARAM_* constant corresponding
  *                      to the given value.
  */
-function db_get_arg_type(mixed $arg, string $k = null, string $sql = null): int
+function db_get_arg_type(mixed $arg, ?string $k = null, ?string $sql = null): int
 {
     $types = [
         'double'  => PDO::PARAM_STR,
@@ -423,7 +423,7 @@ function db_column_exists(string $tableName, string $columnName): bool
  *                                $row.
  * @return array                  The array containing the rows.
  */
-function db_fetch_all(string $sql, array $vars = [], Closure $modifier = null): array
+function db_fetch_all(string $sql, array $vars = [], ?Closure $modifier = null): array
 {
     if (!($result = db_query($sql, $vars))) return [];
     $rows = [];
@@ -449,7 +449,7 @@ function db_fetch_all(string $sql, array $vars = [], Closure $modifier = null): 
  * @return object|null            The first row's object if there is one.
  *                                Else, null.
  */
-function db_fetch_one(string $sql, array $vars = [], Closure $modifier = null): ?object
+function db_fetch_one(string $sql, array $vars = [], ?Closure $modifier = null): ?object
 {
     foreach (db_fetch_all($sql, $vars, $modifier) as $row) return $row;
     return null;
@@ -467,7 +467,7 @@ function db_fetch_one(string $sql, array $vars = [], Closure $modifier = null): 
  *                                $row.
  * @return mixed                  The value, or null if no result.
  */
-function db_fetch_value(string $sql, array $vars = [], Closure $modifier = null): mixed
+function db_fetch_value(string $sql, array $vars = [], ?Closure $modifier = null): mixed
 {
     if (!($row = db_fetch_one($sql, $vars, $modifier))) return null;
     foreach ($row as $k => $v) return $v;
@@ -485,7 +485,7 @@ function db_fetch_value(string $sql, array $vars = [], Closure $modifier = null)
  *                                $row.
  * @return array                  An array containing all the values.
  */
-function db_fetch_values(string $sql, array $vars = [], Closure $modifier = null): array
+function db_fetch_values(string $sql, array $vars = [], ?Closure $modifier = null): array
 {
     return array_map(function($row)
     {
@@ -545,12 +545,12 @@ function db_uid(string $tableName, string $fieldName = 'uid', ?Closure $generate
  * @return string                         The generated slug.
  */
 function db_slug(
-    string       $tableName,
-    string       $text          = null,
-    int | string $originalId    = null,
-    string       $slugFieldName = 'slug',
-    string       $idFieldName   = 'id',
-    ?string      $where         = null,
+    string              $tableName,
+    ?string             $text          = null,
+    int | string | null $originalId    = null,
+    string              $slugFieldName = 'slug',
+    string              $idFieldName   = 'id',
+    ?string             $where         = null,
 ): string
 {
     db_assert_field_format($tableName);
@@ -595,7 +595,7 @@ function db_now(): string
  * @return bool                    Returns true if the table and optionnaly
  *                                 the column exists.
  */
-function db_field_exists(string $tableName, string $columnName = null): bool
+function db_field_exists(string $tableName, ?string $columnName = null): bool
 {
     foreach (db_fetch_all('SHOW TABLES') as $t) {
         foreach ($t as $k => $t) { break; }
@@ -843,8 +843,8 @@ function db_search(
     string $q,
     string $mode          = 'equals',
     ?array $includeTables = null,
-    int    $queryOffset        = 0,
-    ?int   $queryLimit         = null,
+    int    $queryOffset   = 0,
+    ?int   $queryLimit    = null,
 ): array
 {
     $tables = [];
@@ -1094,7 +1094,7 @@ class Microbe_Query_Builder
     // -------------------------------------------------------------------------
     // Join
 
-    public function join(string $expr, string $on = null, string $side = 'INNER'): self
+    public function join(string $expr, ?string $on = null, string $side = 'INNER'): self
     {
         if (!in_array($side = strtoupper($side), [ 'LEFT', 'RIGHT', 'INNER' ])) throw new Microbe_Exception("Invalid SQL join side '{$side}'.");
         $this->join[] = $side . ' JOIN ' . $expr . ($on ? ' ON ' . $on : '');
@@ -1422,10 +1422,10 @@ class Microbe_Entity
     }
 
     public static function fetch(
-        string  $mode,
-        string  $propertyName     = null,
-        mixed   $comparisionValue = null,
-        Closure $modifier         = null,
+        string   $mode,
+        ?string  $propertyName     = null,
+        mixed    $comparisionValue = null,
+        ?Closure $modifier         = null,
     ): array | object | int | null
     {
         ($entity = new static())->assertDatabaseStored(id: false);
@@ -1827,7 +1827,7 @@ class Microbe_Entity
         return $this;
     }
 
-    public function getAncestors(bool $asc = true, Closure $filter = null): array
+    public function getAncestors(bool $asc = true, ?Closure $filter = null): array
     {
         $this->assertDatabaseStored();
 
@@ -1902,7 +1902,7 @@ class Microbe_Entity
         return $child;
     }
 
-    public function getChildren(?array $orderBy = null, Closure $query = null): array
+    public function getChildren(?array $orderBy = null, ?Closure $query = null): array
     {
         $this->assertDatabaseStored();
 
@@ -2140,7 +2140,7 @@ function db_run_migration(string $name, string $side = 'up', bool $standalone = 
  *                                 current migration will be set to it and the
  *                                 function will return null.
  */
-function db_current_migration(string|bool $name = null): ?string
+function db_current_migration(string | bool | null $name = null): ?string
 {
     $k = 'core.migration';
     if ($name === null) return db_cfg($k);

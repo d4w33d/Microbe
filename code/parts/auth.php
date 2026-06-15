@@ -18,7 +18,7 @@ function get_auth_cookie_name(): string
  * @param string $name New name of the cookie. If null, the default name
  *                     hardcoded in <get_auth_cookie_name> will be used.
  */
-function set_auth_cookie_name(string $name = null): void
+function set_auth_cookie_name(?string $name = null): void
 {
     cfg('@core.auth_cookie_name', $name);
 }
@@ -29,7 +29,7 @@ function set_auth_cookie_name(string $name = null): void
  * when setting authentication token (e.g. for unremembered logins).
  * @param int|null $lifetime TTL in seconds
  */
-function set_auth_cookie_lifetime(int $lifetime = null): void
+function set_auth_cookie_lifetime(?int $lifetime = null): void
 {
     cfg('@core.auth_cookie_lifetime', $lifetime);
 }
@@ -56,7 +56,7 @@ function register_user_getter(Closure $callback): void
  *                              be cleared (aka logout) - cf <clear_auth_token>.
  * @param int|null    $lifetime TTL in seconds
  */
-function set_auth_token(string $token = null, int $lifetime = null): void
+function set_auth_token(?string $token = null, ?int $lifetime = null): void
 {
     if ($lifetime === null) {
         $lifetime = cfg('~@core.auth_cookie_lifetime') ?: 61 * 24 * 60 * 60;
@@ -90,7 +90,7 @@ function get_auth_token(): ?string
  * @param  string|null $redirect URL to redirect. If null, an exception
  *                               may be thrown if <assert_logged_in> needs it.
  */
-function register_not_logged_in_redirect(string $redirect = null): void
+function register_not_logged_in_redirect(?string $redirect = null): void
 {
     cfg('@core.user_not_logged_in_redirect', $redirect);
 }
@@ -145,7 +145,7 @@ function is_logged_in(): bool
  * @param  string|null $redirect [description]
  * @return mixed                 [description]
  */
-function assert_logged_in(string $redirect = null): mixed
+function assert_logged_in(?string $redirect = null): mixed
 {
     if ($user = get_logged_in_user()) {
         return $user;

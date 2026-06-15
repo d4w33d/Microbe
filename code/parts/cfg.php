@@ -117,7 +117,7 @@ function process_config_references(string $str): string
  *                       value.
  * @return mixed         Configuration entry's value.
  */
-function cfg(string $var = null, mixed $value = '<@__undefined__@>'): mixed
+function cfg(?string $var = null, mixed $value = '<@__undefined__@>'): mixed
 {
     global $_CONFIG;
     if ($var === null) return $_CONFIG;
@@ -194,7 +194,7 @@ function __cfg(string $var): void
  *                       value.
  * @return mixed         Configuration entry's value.
  */
-function stored(string $var = null, mixed $value = '<@__undefined__@>'): mixed
+function stored(?string $var = null, mixed $value = '<@__undefined__@>'): mixed
 {
     return cfg('~@stored.' . $var, $value);
 }
