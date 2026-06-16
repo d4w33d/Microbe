@@ -2152,6 +2152,18 @@ function db_current_migration(string | bool | null $name = null): ?string
     return null;
 }
 
+/**
+ * <USER>
+ * Run all missing migrations until the last one.
+ */
+function db_run_missing_migrations(): void
+{
+    if (!($migrations = db_migrations())) return;
+    $last = $migrations[array_key_last($migrations)];
+    if (db_current_migration() === $last) return;
+    db_run_migration($last->name, standalone: false);
+}
+
 // ---{ Database and User creation }--------------------------------------------
 
 /**
