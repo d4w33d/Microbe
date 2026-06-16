@@ -61,6 +61,22 @@ function exec_php_file(
 
 /**
  * <USER>
+ * Execute silently a command via <popen()> and returns the full
+ * result as a string.
+ * @param  string $cmd Command.
+ * @return string      Command's output.
+ */
+function exec_process(string $cmd): string
+{
+    $io = popen($cmd . ' 2>&1', 'r');
+    $response = '';
+    while (!feof($io)) $response .= fgets($io, 4096);
+    pclose($io);
+    return $response;
+}
+
+/**
+ * <USER>
  * Execute an interactive command through <proc_open>, and wait for some of
  * the entries of $expect, then answer it.
  * @param  string      $cmd        Command to execute.
