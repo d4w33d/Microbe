@@ -127,6 +127,20 @@ function to_object(array | object $d): object | array
 
 /**
  * <USER>
+ * Loop on an array and returns the maximum length of values or keys strings.
+ * @param  array        $arr     Array to process.
+ * @param  bool|boolean $useKeys Check length on keys instead of values.
+ * @return int                   Maximum length.
+ */
+function get_array_items_max_length(array $arr, bool $useKeys = false): int
+{
+    $max = 0;
+    foreach ($arr as $k => $v) $max = max($max, strlen($useKeys ? $k : $v));
+    return $max;
+}
+
+/**
+ * <USER>
  * Get the constants defined in a specific class, optionaly altered by a
  * regexp and/or a user function.
  * @param  string       $className Name of the class
