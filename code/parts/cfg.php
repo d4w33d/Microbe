@@ -16,11 +16,35 @@ function load_config(): void
 {
     global $_CONFIG;
 
-    $_CONFIG = load_config_file(get_path('config.json'));
-    $_CONFIG = array_merge($_CONFIG, load_config_file(get_path('config-user.json')));
-    $_CONFIG = array_merge($_CONFIG, load_config_file(get_path('config-' . get_env() . '.json')));
+    $_CONFIG = [];
+    foreach (get_config_file_allowed_levels() as $level) {
+        $_CONFIG = array_merge($_CONFIG, load_config_file(get_config_file_path($level)));
+    }
 
     process_config($_CONFIG);
+}
+
+/**
+ * Returns the levels allowed for configuration files.
+ * @return array Array containing levels names as strings.
+ */
+function get_config_file_allowed_levels(): array
+{
+    return [ 'global', 'user', 'env' ];
+}
+
+/**
+ * <USER>
+ * Returns the path of the configuration file, based on the given level.
+ * @param  string $level Level: 'global', 'user' or 'env'
+ * @return string        Absolute path to the file.
+ */
+function get_config_file_path(string $level = 'global'): string
+{
+    if ($level === 'global') return get_path('config.json');
+    if ($level === 'user') return get_path('config-user.json');
+    if ($level === 'env') return get_path('config-' . get_env() . '.json');
+    throw new Microbe_Exception("Invalid Configuration File Level Name: {$level}.");
 }
 
 /**
@@ -181,6 +205,33 @@ function _cfg(string $var): void
 function _h_cfg(string $var): void
 {
     echo esc(cfg($var) ?: '');
+}
+
+/**
+ * <USER>
+ * Updates some configuration keys in the configuration file.
+ * @param  string                      $key   Key (dot-separated) of the
+ *                                            configuration entry.
+ * @param  array|string|int|float|bool $value Value to set.
+ * @param  string                      $level Level of the configuration file
+ *                                            (default: 'user').
+ */
+function update_config_value(string $key, array | string | int | float | bool $value, string $level = 'user'): void
+{
+    if (!is_file($path = get_config_file_path($level))) throw new Microbe_Exception("Trying to write config value on a non existant file: {$path}.");
+    if (!($raw = file_get_contents($path))) throw new Microbe_Exception("Trying to write config value on an empty file: {$path}.");
+    if (!($data = json_deocde($raw, true))) throw new Microbe_Exception("Trying to write config value on a non-JSON file: {$path}.");
+
+    $ref = &$data;
+    foreach (explode('.', $key) as $k) {
+        if (!isset($ref[$k]) || !is_array($ref[$k])) $ref[$k] = [];
+        $ref = &$ref[$k];
+    }
+    $ref = $v;
+    unset($ref);
+
+    $raw = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    file_put_contents($path, $raw);
 }
 
 /**
