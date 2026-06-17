@@ -319,9 +319,19 @@ function route(string | array $path, Closure $callback): void
  * @param  bool|boolean $host     Prepend the protocol and the hostname or not.
  * @param  string|null  $fallback Back-url fallback. Used with special
  *                                path ':back'.
+ * @param  bool|string $csrf      If true or a string, a _csrf parameter
+ *                                is appent to the query strings with a
+ *                                new token (the string represents the context
+ *                                if needed).
  * @return string                 Computed URL.
  */
-function url(string $path = '/', array | bool $args = [], bool $host = false, ?string $fallback = null): string
+function url(
+    string        $path     = '/',
+    array | bool  $args     = [],
+    bool          $host     = false,
+    ?string       $fallback = null,
+    bool | string $csrf     = false,
+): string
 {
     if ($path === '.') { // Current path
         $path = get_relative_url();
@@ -360,6 +370,8 @@ function url(string $path = '/', array | bool $args = [], bool $host = false, ?s
         $host = $args;
         $args = [];
     }
+
+    if ($csrf !== false) $args[get_csrf_param_name()] = csrf_token(is_string($csrf) ? $csrf : null);
 
     $qs = [];
     $hash = null;
