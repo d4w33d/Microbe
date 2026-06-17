@@ -119,3 +119,18 @@ function csrf_gc(): void
     }
     set_session_var($sn, $tokens);
 }
+
+/**
+ * <USER>
+ * Write a hidden HTML input with a new CSRF token.
+ * @param  string|null $ctx  Optional context.
+ * @param  string      $name Name of the input.
+ */
+function csrf_input(?string $ctx = null, string $name = '_csrf', array $attrs = []): void
+{
+    echo (string) dom('input')->attr(array_merge($attrs, [
+        'type'  => 'hidden',
+        'name'  => $name,
+        'value' => csrf_token($ctx),
+    ]));
+}
