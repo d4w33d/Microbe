@@ -105,6 +105,20 @@ function is_valid_domain_name(string $domain): bool
 
 /**
  * <USER>
+ * Check if a string is a valid host name: domain, subdomain, IP, IPv6, etc.
+ * @param  string  $host Probable hostname.
+ * @return boolean       Is it a valid hostname string or not?
+ */
+function is_valid_host_name(string $host): bool
+{
+    $clean = trim($host, '[]');
+    if (filter_var($clean, FILTER_VALIDATE_IP)) return true;
+    $pattern = '/^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.){0,126}[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/';
+    return strlen($host) <= 253 && preg_match($pattern, $host) === 1;
+}
+
+/**
+ * <USER>
  * Tries to retrieve a file name from a given URL.
  * @param  string      $url URL.
  * @return string|null      File name if found.
