@@ -230,7 +230,7 @@ function update_config_value(string $key, array | string | int | float | bool $v
         if (!isset($ref[$k]) || !is_array($ref[$k])) $ref[$k] = [];
         $ref = &$ref[$k];
     }
-    $ref = $v;
+    $ref = $value;
     unset($ref);
 
     $raw = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
