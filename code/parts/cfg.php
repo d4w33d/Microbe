@@ -218,9 +218,13 @@ function _h_cfg(string $var): void
  */
 function update_config_value(string $key, array | string | int | float | bool $value, string $level = 'user'): void
 {
-    if (!is_file($path = get_config_file_path($level))) throw new Microbe_Exception("Trying to write config value on a non existant file: {$path}.");
-    if (!($raw = file_get_contents($path))) throw new Microbe_Exception("Trying to write config value on an empty file: {$path}.");
-    if (!($data = json_deocde($raw, true))) throw new Microbe_Exception("Trying to write config value on a non-JSON file: {$path}.");
+    $path = get_config_file_path($level);
+    $data = [];
+    if (is_file($path)) {
+        $raw = file_get_contents($path) ?: '';
+        if (!($data = json_deocde($raw, true))) throw new Microbe_Exception("Trying to write config value on a non-JSON file: {$path}.");
+        if (!is_array($data)) throw new Microbe_Exception("Trying to write config value on a non-array JSON data (file: {$path}).");
+    }
 
     $ref = &$data;
     foreach (explode('.', $key) as $k) {
