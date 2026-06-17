@@ -209,7 +209,7 @@ function _h_cfg(string $var): void
 
 /**
  * <USER>
- * Updates some configuration keys in the configuration file.
+ * Updates some configuration key in the configuration file.
  * @param  string                      $key   Key (dot-separated) of the
  *                                            configuration entry.
  * @param  array|string|int|float|bool $value Value to set.
@@ -236,6 +236,19 @@ function update_config_value(string $key, array | string | int | float | bool $v
 
     $raw = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     file_put_contents($path, $raw);
+}
+
+/**
+ * <USER>
+ * Updates several configuration keys in the configuration file.
+ * @param  string                      $values Key-value array.
+ *                                             Leys depth-walking are dot-separated.
+ * @param  string                      $level  Level of the configuration file
+ *                                             (default: 'user').
+ */
+function update_config_values(string $values, string $level = 'user'): void
+{
+    foreach ($values as $k => $v) update_config_value($k, $v, level: $level);
 }
 
 /**
