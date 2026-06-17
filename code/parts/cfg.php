@@ -222,7 +222,7 @@ function update_config_value(string $key, array | string | int | float | bool $v
     $data = [];
     if (is_file($path)) {
         $raw = file_get_contents($path) ?: '';
-        if (!($data = json_deocde($raw, true))) throw new Microbe_Exception("Trying to write config value on a non-JSON file: {$path}.");
+        if (!($data = json_decode($raw, true))) throw new Microbe_Exception("Trying to write config value on a non-JSON file: {$path}.");
         if (!is_array($data)) throw new Microbe_Exception("Trying to write config value on a non-array JSON data (file: {$path}).");
     }
 
