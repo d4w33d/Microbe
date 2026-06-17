@@ -63,12 +63,14 @@ function get_csrf_tokens(): array
 /**
  * <USER>
  * Check if a CSRF token is valid.
- * @param  string      $token Token to be verified.
+ * @param  string|null $token Token to be verified. If null, the _csrf
+ *                            variable will be retrieved from $_POST/$_GET.
  * @param  string|null $ctx   Optional context in which this token applies.
  * @return bool               Is valid or not?
  */
-function csrf_verify(string $token, ?string $ctx = null): bool
+function csrf_verify(?string $token = null, ?string $ctx = null): bool
 {
+    if ($token === null) $token = get_nullable_str('_csrf');
     if (!($tokens = get_session_var($sn = get_csrf_session_name()))) return false;
 
     if (!($t = ($tokens[$token] ?? null))) return false;
@@ -82,12 +84,13 @@ function csrf_verify(string $token, ?string $ctx = null): bool
  * <USER>
  * Check if a CSRF token is valid through <csrf_verify()>, and, if invalid,
  * returns a JSON error or a 403 error.
- * @param  string      $token  Token to be verified.
+ * @param  string|null $token  Token to be verified. If null, the _csrf
+ *                             variable will be retrieved from $_POST/$_GET.
  * @param  string|null $ctx    Optional context in which this token applies.
  * @param  string      $output Output: 'exception', json' or 'auto'.
  *                             The mode 'auto' checks if the request if a XHR.
  */
-function csrf_assert(string $token, ?string $ctx = null, string $output = 'auto'): void
+function csrf_assert(?string $token = null, ?string $ctx = null, string $output = 'auto'): void
 {
     if (csrf_verify($token, $ctx)) return;
     if ($output === 'auto') $output = is_xhr() ? 'json' : 'exception';
