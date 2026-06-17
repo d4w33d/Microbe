@@ -1963,8 +1963,8 @@ function dev_render_console(array $vars): void
                                                 <tr>
                                                     <td><code><?php _esc($token); ?></code></td>
                                                     <td>
-                                                        <?php if ($token_info->ctx): ?>
-                                                            <code><?php _esc($token_info->ctx); ?></code>
+                                                        <?php if ($token_info['ctx']): ?>
+                                                            <code><?php _esc($token_info['ctx']); ?></code>
                                                         <?php else: ?>
                                                             <span class="low">(None)</span>
                                                         <?php endif; ?>
