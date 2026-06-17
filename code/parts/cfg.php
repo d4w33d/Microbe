@@ -179,7 +179,10 @@ function cfg(?string $var = null, mixed $value = '<@__undefined__@>'): mixed
     foreach ($columns as $col) {
         if (!array_key_exists($col, $v)) {
             if (!$showError) return null;
-            die("Configuration entry {$var} is not defined.\n");
+            if (!headers_sent()) header('Content-Type: text/plain; charset=utf-8');
+            echo "[ERROR] Configuration entry {$var} is not defined.\n";
+            foreach (debug_backtrace() as $line) echo '  ' . $line['file'] . ':' . $line['line'] . ' (' . $line['function'] . ')' . "\n";
+            exit;
         }
         $v = $v[$col];
     }

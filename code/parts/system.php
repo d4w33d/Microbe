@@ -180,4 +180,62 @@ function get_system_user_name(): ?string
     return get_system_user_name_by_id($id);
 }
 
+/**
+ * <USER>
+ * Generates a SHA-256 signature for the current machine.
+ * @param  string|null $salt Optional salt string.
+ * @return string            Machine signature.
+ */
+function get_machine_signature(?string $salt = null): string
+{
+    $elements = [
+        'salt'      => $salt ?: '',
+        'root_path' => get_root_dir(),
+        'hostname'  => php_uname('n') ?: gethostname() ?: 'unknown-host',
+        'os'        => php_uname('s') . '-' . php_uname('m'),
+    ];
+
+    if (($machineId = get_sys_machine_id()) !== null) $elements['machine_id'] = $machineId;
+    if ($macs = get_sys_mac_addresses()) $elements['mac'] = implode(',', $macs);
+
+    ksort($elements);
+    return sha256(implode('|', $elements));
+}
+
+/**
+ * <USER>
+ * Tries to fetch low-level machine ID.
+ * @return string|null Machine-ID
+ */
+function get_sys_machine_id(): ?string
+{
+    foreach ([ '/etc/machine-id', '/var/lib/dbus/machine-id' ] as $path) {
+        if (!is_readable($path)) continue;
+        $content = trim((string) file_get_contents($path));
+        if ($content !== '') return $content;
+    }
+    return null;
+}
+
+/**
+ * <USER>
+ * Tries to return an array of mac addresses of the machine.
+ * @return array Mac addresses.
+ */
+function get_sys_mac_addresses(): array
+{
+    $dir = '/sys/class/net';
+    if (!is_dir($dir) || !is_readable($dir)) return [];
+    $macs = [];
+    foreach (scandir($dir) as $iface) {
+        if ($iface === '.' || $iface === '..' || $iface === 'lo') continue;
+        $addrFile = "$dir/$iface/address";
+        if (!is_readable($addrFile)) continue;
+        $mac = trim((string) file_get_contents($addrFile));
+        if ($mac !== '' && $mac !== '00:00:00:00:00:00') $macs[] = $mac;
+    }
+    sort($macs);
+    return $macs;
+}
+
 // =============================================================================

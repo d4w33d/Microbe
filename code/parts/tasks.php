@@ -30,7 +30,7 @@ function register_task(
     register_thing('tasks', (object) [
         'bundle'  => $bundle,
         'name'    => $name,
-        'uid'     => $uid = str_replace('c', 'z', hash('sha256', 'task:' . $bundle . ':' . $name . ':' . cfg('@security.salt'))),
+        'uid'     => $uid = str_replace('c', 'z', hash('sha256', 'task:' . $bundle . ':' . $name . ':' . get_salt())),
         'func'    => $func,
         'args'    => $args,
         'file'    => get_data_dir('tasks', 'auto', $uid . '.php'),

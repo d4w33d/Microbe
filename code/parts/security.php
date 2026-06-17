@@ -13,6 +13,16 @@ define('MB_SECURITY_LEVEL_CRITICAL', 'critical');
 
 /**
  * <USER>
+ * Returns security salt.
+ * @return string Salt.
+ */
+function get_salt(): string
+{
+    return cfg('~@security.salt') ?: substr(get_machine_signature(), 0, 32);
+}
+
+/**
+ * <USER>
  * Shortcut to the 'hash' sha256 function call.
  * @param  string $str String to hash.
  * @return string      SHA-256 hashed string.
@@ -272,14 +282,10 @@ function short_uid(string | Microbe_Entity | stdClass $uid, int $len = 9): strin
  */
 function hash_password(string $password): string
 {
-    if (!($salt = cfg('~@security.salt'))) {
-        throw new Microbe_Exception("Trying to hash a password without a salt defined in the configuration.");
-    }
-
     $algo = cfg('~@security.passwords.hash.algorithm') ?: 'sha256';
     $str = cfg('~@security.passwords.hash.format') ?: '{salt}:{password}';
     $str = replace([
-        '{salt}'     => $salt,
+        '{salt}'     => get_salt(),
         '{password}' => $password,
     ], $str);
 
