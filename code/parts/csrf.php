@@ -110,7 +110,7 @@ function csrf_rotate(): void
  */
 function csrf_gc(): void
 {
-    $tokens = get_session_var($sn = get_csrf_session_name());
+    if (!($tokens = get_session_var($sn = get_csrf_session_name()))) return;
     $now = time();
     $tokens = array_filter($tokens, fn(array $token): bool => $token['expires'] >= $now);
     if (count($tokens) > ($max = get_csrf_max_tokens())) {
