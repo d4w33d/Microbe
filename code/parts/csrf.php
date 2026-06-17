@@ -77,7 +77,7 @@ function csrf_verify(?string $token = null, ?string $ctx = null): bool
     unset($tokens[$token]);
     set_session_var($sn, $tokens);
 
-    return $token['expires'] >= time();
+    return $t['expires'] >= time();
 }
 
 /**
@@ -94,7 +94,7 @@ function csrf_assert(?string $token = null, ?string $ctx = null, string $output 
 {
     if (csrf_verify($token, $ctx)) return;
     if ($output === 'auto') $output = is_xhr() ? 'json' : 'exception';
-    if ($output === 'json') json_error('invalid_csrf_token');
+    if ($output === 'json') json_error('invalid_csrf_token', [ 'message' => "Invalid CSRF Token" ]);
     throw new Microbe_Unauthorized_Exception("Invalid CSRF Token");
 }
 
