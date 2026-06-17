@@ -18,7 +18,7 @@ function load_config(): void
 
     $_CONFIG = [];
     foreach (get_config_file_allowed_levels() as $level) {
-        $_CONFIG = array_merge($_CONFIG, load_config_file(get_config_file_path($level)));
+        $_CONFIG = array_replace_recursive($_CONFIG, load_config_file(get_config_file_path($level)));
     }
 
     process_config($_CONFIG);
