@@ -573,7 +573,7 @@ function preprocess_assets(bool $force = false): void
         cfg('@core.assets.preprocessors', $preprocessors);
     }
 
-    $enabledPreprocessors = cfg('~@assets.preprocessing.preprocessors');
+    $enabledPreprocessors = cfg('~@assets.preprocessing.preprocessors') ?: [];
     foreach ($preprocessors as $preprocessor) {
         if (!in_array($preprocessor['name'], $enabledPreprocessors)) continue;
         foreach ($dirs as $dir) $preprocessor['func']($dir);
