@@ -52,6 +52,16 @@ function csrf_token(?string $ctx = null): string
 
 /**
  * <USER>
+ * Returns all CSRF tokens stored.
+ * @return array Tokens array.
+ */
+function get_csrf_tokens(): array
+{
+    return get_session_var(get_csrf_session_name()) ?: [];
+}
+
+/**
+ * <USER>
  * Check if a CSRF token is valid.
  * @param  string      $token Token to be verified.
  * @param  string|null $ctx   Optional context in which this token applies.
@@ -59,7 +69,7 @@ function csrf_token(?string $ctx = null): string
  */
 function csrf_verify(string $token, ?string $ctx = null): bool
 {
-    $tokens = get_session_var($sn = get_csrf_session_name());
+    if (!($tokens = get_session_var($sn = get_csrf_session_name()))) return false;
 
     if (!($t = ($tokens[$token] ?? null))) return false;
     unset($tokens[$token]);

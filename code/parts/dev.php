@@ -130,10 +130,16 @@ function dev_console(): void
 
     // --- Security ------------------------------------------------------------
 
-    $security = (object) [ 'check' => null ];
+    $security = (object) [
+        'csrf'  => (object) [ 'tokens' => null ],
+        'check' => null,
+    ];
 
-    if ($do === 'security-check') {
-        $security->check = security_check();
+    if ($view === 'security') {
+        $security->csrf->tokens = get_csrf_tokens();
+        if ($do === 'security-check') {
+            $security->check = security_check();
+        }
     }
 
     // --- Files ---------------------------------------------------------------
@@ -1912,33 +1918,66 @@ function dev_render_console(array $vars): void
                             <?php if ($backups): ?>
                                 <fieldset>
                                     <legend><h2>🗃️ Backup Archives</h2></legend>
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>⌚ Moment</th>
-                                            <th colspan="2">📁 Files</th>
-                                            <th colspan="2">🛢️ Database</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($backups as $backup): ?>
+                                    <table>
+                                        <thead>
                                             <tr>
-                                                <td><?php _esc($backup->moment->format('Y-m-d H:i:s')); ?></td>
-                                                <?php foreach ([ 'files', 'db' ] as $scope): ?>
-                                                    <?php if ($backup->scopes->$scope): ?>
-                                                        <td class="lnk"><a href="<?php _esc($backup->scopes->$scope->url); ?>">📥 <?php _esc(basename($backup->scopes->$scope->path)); ?></a></td>
-                                                        <td class="fit right"><?php _esc($backup->scopes->$scope->readable_size); ?></td>
-                                                    <?php else: ?>
-                                                        <td class="low center" colspan="2">Nothing</td>
-                                                    <?php endif; ?>
-                                                <?php endforeach; ?>
+                                                <th>⌚ Moment</th>
+                                                <th colspan="2">📁 Files</th>
+                                                <th colspan="2">🛢️ Database</th>
                                             </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($backups as $backup): ?>
+                                                <tr>
+                                                    <td><?php _esc($backup->moment->format('Y-m-d H:i:s')); ?></td>
+                                                    <?php foreach ([ 'files', 'db' ] as $scope): ?>
+                                                        <?php if ($backup->scopes->$scope): ?>
+                                                            <td class="lnk"><a href="<?php _esc($backup->scopes->$scope->url); ?>">📥 <?php _esc(basename($backup->scopes->$scope->path)); ?></a></td>
+                                                            <td class="fit right"><?php _esc($backup->scopes->$scope->readable_size); ?></td>
+                                                        <?php else: ?>
+                                                            <td class="low center" colspan="2">Nothing</td>
+                                                        <?php endif; ?>
+                                                    <?php endforeach; ?>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </fieldset>
                             <?php endif; ?>
 
                         <?php elseif ($view === 'security'): ?>
+
+                            <fieldset>
+                                <legend><h2>🔐 CSRF Tokens</h2></legend>
+                                <?php if ($security->csrf->tokens): ?>
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>🔑 Token</th>
+                                                <th>🗂️ Context</th>
+                                                <th>⌚ Expires</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($security->csrf->tokens as $token => $token_info): ?>
+                                                <tr>
+                                                    <td><code><?php _esc($token); ?></code></td>
+                                                    <td>
+                                                        <?php if ($token_info->ctx): ?>
+                                                            <code><?php _esc($token_info->ctx); ?></code>
+                                                        <?php else: ?>
+                                                            <span class="low">(None)</span>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td><?php _esc((new DateTime('@' . $token_info['expires']))->format('Y-m-d H:i:s')); ?></td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                <?php else: ?>
+                                    <p>No CSRF Token Stored.</p>
+                                <?php endif; ?>
+                            </fieldset>
 
                             <fieldset>
                                 <legend><h2>🛡️ Security</h2></legend>
