@@ -28,15 +28,6 @@ function get_csrf_max_tokens(): int
 }
 
 /**
- * Returns the length of each CSRF token's string.
- * @return int Token length.
- */
-function get_csrf_token_length(): int
-{
-    return 32;
-}
-
-/**
  * <USER>
  * Generate a CSRF token and returns it.
  * @param  string|null $ctx Optional context.
@@ -49,7 +40,7 @@ function csrf_token(?string $ctx = null): string
     $tokens = get_session_var($sn = get_csrf_session_name());
     if (!$tokens || !is_array($tokens)) $tokens = [];
 
-    $token = bin2hex(random_bytes(get_csrf_token_length()));
+    $token = bin2hex(random_bytes(32));
     $tokens[$token] = [
         'ctx'     => $ctx,
         'expires' => time() + get_csrf_ttl(),
