@@ -26,17 +26,19 @@ function db_config(): ?object
 /**
  * <USER>
  * Returns the DSN string of the database connection.
- * @param  object|null Database configuration got from <db_config()>.
- * @return string|null DSN String.
+ * @param  object|array|null $config Database configuration got
+ *                                   from <db_config()>.
+ * @return string|null               DSN String.
  */
-function db_dsn(?object $config = null): ?string
+function db_dsn(object | array | null $config = null): ?string
 {
     if ($config === null && !($config = db_config())) return null;
+    if (is_array($config)) $config = (object) $config;
 
     return 'mysql:host=' . $config->host
         . ';port=' . $config->port
         . ';dbname=' . $config->db_name
-        . ';charset=' . ($config->charset ?: 'utf8mb4');
+        . ';charset=' . (($config->charset ?? '') ?: 'utf8mb4');
 }
 
 /**
@@ -75,6 +77,43 @@ function db_setup(string $ref = 'main', ?object $config = null, bool $forceRenew
 function db_get_last_pdo_connect_error(): ?string
 {
     return cfg('~@core.db.last_pdo_connect_error');
+}
+
+/**
+ * <USER>
+ * Check if given credentials are valid, trying to connect
+ * to specified database.
+ * @param  string            $host       Database hostname.
+ * @param  int               $port       Database port.
+ * @param  string            $username   Database username.
+ * @param  string            $password   Database password.
+ * @param  string            $name       Database name.
+ * @param  string|null       &$error     The exception's message will be
+ *                                       populated here.
+ * @param  PDOException|null &$exception The exception will be populated here.
+ * @return bool                          True if we can connect to the database.
+ */
+function db_validate_credentials(
+    string        $host,
+    int           $port,
+    string        $username,
+    string        $password,
+    string        $name,
+    ?string       &$error     = null,
+    ?PDOException &$exception = null,
+): bool
+{
+    if (!($dsn = db_dsn([ 'host' => $host, 'port' => $port, 'db_name' => $name ]))) return false;
+    try {
+        $dbh = new PDO($dsn, $username, $password);
+        $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    } catch (PDOException $e) {
+        $error = $e->getMessage();
+        $exception = $e;
+        return false;
+    }
+    unset($dbh);
+    return true;
 }
 
 /**
@@ -200,6 +239,28 @@ function db_assert_comparator(string $cmp): string
 {
     if (db_is_valid_comparator($cmp)) return $cmp;
     throw new Microbe_Exception("The SQL comparator is not valid");
+}
+
+/**
+ * <USER>
+ * Check if the given string is a valid database (mainly MySQL) username.
+ * @param  string $username Possible database username.
+ * @return bool             True if the username format is valid.
+ */
+function db_is_valid_username(string $username): bool
+{
+    return strlen($username) <= 32 && preg_match('/^[a-zA-Z0-9_$]{1,32}$/', $username) === 1;
+}
+
+/**
+ * <USER>
+ * Check if the given string is a valid database (mainly MySQL) name.
+ * @param  string $username Possible database name.
+ * @return bool             True if the name format is valid.
+ */
+function db_is_valid_database_name(string $name): bool
+{
+    return strlen($name) <= 64 && preg_match('/^[a-zA-Z0-9_$]{1,64}$/', $name) === 1;
 }
 
 /**
