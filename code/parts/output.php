@@ -752,14 +752,26 @@ function _icon(mixed $icon, ?string $format = null): void
 /**
  * <USER>
  * Display a JSON string.
- * @param  array  $data           Data to encode.
- * @param  int    $code           HTTP Code.
- * @param  bool   $pretty         Prettify JSON string or not.
- * @param  bool   $endingLineFeed Echo a \n after the JSON.
- *                                Nicer for terminal display.
+ * @param  array       $data           Data to encode.
+ * @param  int         $code           HTTP Code.
+ * @param  bool        $pretty         Prettify JSON string or not.
+ * @param  bool        $endingLineFeed Echo a \n after the JSON.
+ *                                     Nicer for terminal display.
+ * @param  bool|string $csrf           If true or a string, a _csrf parameter
+ *                                     is appent to the data with a new token
+ *                                     (the string represents the context
+ *                                     if needed).
  */
-function json(array $data, int $code = 200, bool $pretty = false, bool $endingLineFeed = true, bool $dispatchEvents = true): void
+function json(
+    array         $data,
+    int           $code           = 200,
+    bool          $pretty         = false,
+    bool          $endingLineFeed = true,
+    bool          $dispatchEvents = true,
+    bool | string $csrf           = false,
+): void
 {
+    if ($csrf !== false) $data['_csrf'] = csrf_token(is_string($csrf) ? $csrf : null);
     http_response_code($code);
     header('Content-Type: application/json; charset=utf-8');
     if ($dispatchEvents) dispatch('before_first_output');
@@ -771,31 +783,48 @@ function json(array $data, int $code = 200, bool $pretty = false, bool $endingLi
 /**
  * <USER>
  * Display a JSON string, with a property 'success' set to true.
- * @param  array  $data Optional data to encode.
- * @param  int    $code          HTTP Code.
- * @param  bool   $pretty        Prettify JSON string or not.
+ * @param  array       $data   Optional data to encode.
+ * @param  int         $code   HTTP Code.
+ * @param  bool        $pretty Prettify JSON string or not.
+ * @param  bool|string $csrf   If true or a string, a _csrf parameter
+ *                             is appent to the data with a new token
+ *                             (the string represents the context if needed).
  */
-function json_success(array $data = [], int $code = 200, bool $pretty = false): void
+function json_success(
+    array         $data   = [],
+    int           $code   = 200,
+    bool          $pretty = false,
+    bool | string $csrf   = false,
+): void
 {
-    json(array_merge($data, [ 'success' => true ]), code: $code, pretty: $pretty);
+    json(array_merge($data, [ 'success' => true ]), code: $code, pretty: $pretty, csrf: $csrf);
 }
 
 /**
  * <USER>
  * Display a JSON string, with a property 'success' set to false, and
  * an 'error' code/message.
- * @param  string $error  Error added in the output JSON object.
- * @param  array  $data   Optional data to encode.
- * @param  int    $code   HTTP Code.
- * @param  bool   $pretty Prettify JSON string or not.
+ * @param  string      $error  Error added in the output JSON object.
+ * @param  array       $data   Optional data to encode.
+ * @param  int         $code   HTTP Code.
+ * @param  bool        $pretty Prettify JSON string or not.
+ * @param  bool|string $csrf   If true or a string, a _csrf parameter
+ *                             is appent to the data with a new token
+ *                             (the string represents the context if needed).
  */
-function json_error(string | array $error = 'unknown', array $data = [], int $code = 200, bool $pretty = false): void
+function json_error(
+    string | array $error  = 'unknown',
+    array          $data   = [],
+    int            $code   = 200,
+    bool           $pretty = false,
+    bool | string  $csrf   = false,
+): void
 {
     if (is_array($error)) {
         $data = $error;
         $error = 'unknown';
     }
-    json(array_merge($data, [ 'success' => false, 'error' => $error ]), code: $code, pretty: $pretty);
+    json(array_merge($data, [ 'success' => false, 'error' => $error ]), code: $code, pretty: $pretty, csrf: $csrf);
 }
 
 /**

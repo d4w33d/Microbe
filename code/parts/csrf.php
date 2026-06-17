@@ -10,6 +10,15 @@ function get_csrf_session_name(): string
 }
 
 /**
+ * Returns the CSRF param name, to be used in query strings, inputs, etc.
+ * @return string Parameter name.
+ */
+function get_csrf_param_name(): string
+{
+    return '_csrf';
+}
+
+/**
  * Returns the CSRF time-to-live.
  * @return int Time-to-live in seconds.
  */
@@ -127,14 +136,16 @@ function csrf_gc(): void
 /**
  * <USER>
  * Write a hidden HTML input with a new CSRF token.
- * @param  string|null $ctx  Optional context.
- * @param  string      $name Name of the input.
+ * @param  string|null $ctx   Optional context.
+ * @param  string|null $name  Name of the input.
+ *                            If null, <get_csrf_param_name()> is used.
+ * @param  array       $attrs Additional attributes to be set on the input.
  */
-function csrf_input(?string $ctx = null, string $name = '_csrf', array $attrs = []): void
+function csrf_input(?string $ctx = null, ?string $name = null, array $attrs = []): void
 {
     echo (string) dom('input')->attrs(array_merge($attrs, [
         'type'  => 'hidden',
-        'name'  => $name,
+        'name'  => $name ?: get_csrf_param_name(),
         'value' => csrf_token($ctx),
     ]));
 }
