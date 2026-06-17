@@ -241,12 +241,12 @@ function update_config_value(string $key, array | string | int | float | bool $v
 /**
  * <USER>
  * Updates several configuration keys in the configuration file.
- * @param  string                      $values Key-value array.
+ * @param  array                       $values Key-value array.
  *                                             Leys depth-walking are dot-separated.
  * @param  string                      $level  Level of the configuration file
  *                                             (default: 'user').
  */
-function update_config_values(string $values, string $level = 'user'): void
+function update_config_values(array $values, string $level = 'user'): void
 {
     foreach ($values as $k => $v) update_config_value($k, $v, level: $level);
 }
