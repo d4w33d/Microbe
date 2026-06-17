@@ -144,8 +144,9 @@ function csrf_gc(): void
 function csrf_input(?string $ctx = null, ?string $name = null, array $attrs = []): void
 {
     echo (string) dom('input')->attrs(array_merge($attrs, [
-        'type'  => 'hidden',
-        'name'  => $name ?: get_csrf_param_name(),
-        'value' => csrf_token($ctx),
+        'type'            => 'hidden',
+        'name'            => $name ?: get_csrf_param_name(),
+        'value'           => $token = csrf_token($ctx),
+        'data-csrf-token' => $token,
     ]));
 }
