@@ -771,7 +771,7 @@ function json(
     bool | string $csrf           = false,
 ): void
 {
-    if ($csrf !== false) $data[get_csrf_param_name()] = csrf_token(is_string($csrf) ? $csrf : null);
+    if ($csrf !== false) $data[get_csrf_param_name()] = generate_csrf_token(is_string($csrf) ? $csrf : null);
     http_response_code($code);
     header('Content-Type: application/json; charset=utf-8');
     if ($dispatchEvents) dispatch('before_first_output');

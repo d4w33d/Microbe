@@ -371,7 +371,7 @@ function url(
         $args = [];
     }
 
-    if ($csrf !== false) $args[get_csrf_param_name()] = csrf_token(is_string($csrf) ? $csrf : null);
+    if ($csrf !== false) $args[get_csrf_param_name()] = generate_csrf_token(is_string($csrf) ? $csrf : null);
 
     $qs = [];
     $hash = null;

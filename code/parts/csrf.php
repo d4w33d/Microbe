@@ -42,7 +42,7 @@ function get_csrf_max_tokens(): int
  * @param  string|null $ctx Optional context.
  * @return string           Token string.
  */
-function csrf_token(?string $ctx = null): string
+function generate_csrf_token(?string $ctx = null): string
 {
     csrf_gc();
 
@@ -77,7 +77,7 @@ function get_csrf_tokens(): array
  * @param  string|null $ctx   Optional context in which this token applies.
  * @return bool               Is valid or not?
  */
-function csrf_verify(?string $token = null, ?string $ctx = null): bool
+function verify_csrf(?string $token = null, ?string $ctx = null): bool
 {
     if ($token === null) $token = get_nullable_str('_csrf');
     if (!($tokens = get_session_var($sn = get_csrf_session_name()))) return false;
@@ -91,7 +91,7 @@ function csrf_verify(?string $token = null, ?string $ctx = null): bool
 
 /**
  * <USER>
- * Check if a CSRF token is valid through <csrf_verify()>, and, if invalid,
+ * Check if a CSRF token is valid through <verify_csrf()>, and, if invalid,
  * returns a JSON error or a 403 error.
  * @param  string|null $token  Token to be verified. If null, the _csrf
  *                             variable will be retrieved from $_POST/$_GET.
@@ -99,9 +99,9 @@ function csrf_verify(?string $token = null, ?string $ctx = null): bool
  * @param  string      $output Output: 'exception', json' or 'auto'.
  *                             The mode 'auto' checks if the request if a XHR.
  */
-function csrf_assert(?string $token = null, ?string $ctx = null, string $output = 'auto'): void
+function assert_csrf(?string $token = null, ?string $ctx = null, string $output = 'auto'): void
 {
-    if (csrf_verify($token, $ctx)) return;
+    if (verify_csrf($token, $ctx)) return;
     if ($output === 'auto') $output = is_xhr() ? 'json' : 'exception';
     if ($output === 'json') json_error('invalid_csrf_token', [ 'message' => "Invalid CSRF Token" ]);
     throw new Microbe_Unauthorized_Exception("Invalid CSRF Token");
@@ -112,7 +112,7 @@ function csrf_assert(?string $token = null, ?string $ctx = null, string $output 
  * Drop all CSRF tokens. To be used after every important action
  * (aka logins, logouts, etc.).
  */
-function csrf_rotate(): void
+function rotate_csrf(): void
 {
     delete_session_var(get_csrf_session_name());
 }
@@ -146,7 +146,7 @@ function csrf_input(?string $ctx = null, ?string $name = null, array $attrs = []
     echo (string) dom('input')->attrs(array_merge($attrs, [
         'type'            => 'hidden',
         'name'            => $name ?: get_csrf_param_name(),
-        'value'           => $token = csrf_token($ctx),
+        'value'           => $token = generate_csrf_token($ctx),
         'data-csrf-token' => $token,
     ]));
 }
