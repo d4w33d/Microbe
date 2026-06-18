@@ -86,7 +86,7 @@ function csrf_verify(?string $token = null, ?string $ctx = null): bool
     unset($tokens[$token]);
     set_session_var($sn, $tokens);
 
-    return $t['expires'] >= time();
+    return $t['ctx'] === $ctx && $t['expires'] >= time();
 }
 
 /**
