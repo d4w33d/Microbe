@@ -427,11 +427,21 @@ function url(
  * @param  bool|boolean $host     Prepend the protocol and the hostname or not.
  * @param  string|null  $fallback Back-url fallback. Used with special
  *                                path ':back'.
+ * @param  bool|string  $csrf     If true or a string, a _csrf parameter
+ *                                is appent to the query strings with a
+ *                                new token (the string represents the context
+ *                                if needed).
  * @return string                 Computed URL.
  */
-function _url(string $path = '/', array | bool $args = [], bool $host = false, ?string $fallback = null): string
+function _url(
+    string        $path     = '/',
+    array | bool  $args     = [],
+    bool          $host     = false,
+    ?string       $fallback = null,
+    bool | string $csrf     = false,
+): string
 {
-    echo $url = url(path: $path, args: $args, host: $host, fallback: $fallback);
+    echo $url = url(path: $path, args: $args, host: $host, fallback: $fallback, csrf: $csrf);
     return $url;
 }
 
@@ -443,11 +453,21 @@ function _url(string $path = '/', array | bool $args = [], bool $host = false, ?
  * @param  bool|boolean $host     Prepend the protocol and the hostname or not.
  * @param  string|null  $fallback Back-url fallback. Used with special
  *                                path ':back'.
+ * @param  bool|string  $csrf     If true or a string, a _csrf parameter
+ *                                is appent to the query strings with a
+ *                                new token (the string represents the context
+ *                                if needed).
  * @return string                 Computed URL.
  */
-function _h_url(string $path = '/', array | bool $args = [], bool $host = false, ?string $fallback = null): string
+function _h_url(
+    string        $path     = '/',
+    array | bool  $args     = [],
+    bool          $host     = false,
+    ?string       $fallback = null,
+    bool | string $csrf     = false,
+): string
 {
-    echo $url = esc(url(path: $path, args: $args, host: $host, fallback: $fallback));
+    echo $url = esc(url(path: $path, args: $args, host: $host, fallback: $fallback, csrf: $csrf));
     return $url;
 }
 
