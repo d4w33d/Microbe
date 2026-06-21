@@ -5,6 +5,164 @@
 
 /**
  * <USER>
+ * Validate some data got from $_POST or $_GET.
+ * The fields are defined by an array containing an array per field, as:
+ * [ 'name_of_the_field', '@type_of_field', '/opt1', '/opt2', fn() => ... ]
+ * @param  array                            $fields   An array containing
+ *                                                    information about fields.
+ * @param  array|null                       $input    An array of data. If null,
+ *                                                    it will be filled
+ *                                                    following $method.
+ * @param  string                           $method   'both', 'post' or 'get'
+ * @param  array|null                       $messages Associative array of
+ *                                                    error codes/messages.
+ * @return Microbe_Data_Validation_Response           Response instance.
+ */
+function validate_data(
+    array  $fields,
+    ?array $input    = null,
+    string $method   = 'both',
+    ?array $messages = [],
+): Microbe_Data_Validation_Response
+{
+    $messages = array_merge([
+        'required'          => t("Value Is Required"),
+        'below_min_value'   => t("Value Is Lower Than Minimum Value Allowed"),
+        'over_max_value'    => t("Value Is Higher Than Maximum Value Allowed"),
+        'invalid_hex_color' => t("Value Is Not A Valid Hexadecimal Color"),
+    ], $messages);
+
+    if ($input === null) {
+        $input = [];
+        if ($method === 'both' || $method === 'post') $input = array_merge($input, $_POST);
+        if ($method === 'both' || $method === 'get') $input = array_merge($input, $_GET);
+    }
+
+    $response = new Microbe_Data_Validation_Response();
+
+    $protectedOpts = array_fill_keys([ 'name', 'type', 'value', 'error' ], true);
+
+    foreach ($fields as $cols) {
+        $o = (object) [
+
+            'name'     => array_shift($cols),
+            'type'     => trim(array_shift($cols), '@'),
+            'value'    => null,
+            'error'    => (object) [ 'code' => null, 'message' => null ],
+
+            'trim'     => false,
+            'safe'     => false,
+            'req'      => false,
+            'required' => false,
+            'null'     => false,
+            'min'      => null,
+            'max'      => null,
+            'fn'       => [],
+
+        ];
+
+        if (!is_str_safe($o->name)) throw new Microbe_Exception("Invalid Field Name");
+        if (!preg_match('/^[a-z0-9-]+$/', $o->type)) throw new Microbe_Exception("Invalid Field Type Format");
+
+        foreach ($cols as $col) {
+            if ($col instanceof Closure) $o->fn[] = $col;
+            if (is_string($col)) {
+                if (!preg_match('/^\/(?<opt>[a-z0-9-]+)(:(?<arg>.+))?$/', $col, $m)) throw new Microbe_Exception("Unable To Parse Field Option: {$col}");
+                if (!property_exists($o, $m['opt'])) throw new Microbe_Exception("Invalid Field Option: {$m['opt']}");
+                if (isset($protectedOpts[$m['opt']])) throw new Microbe_Exception("Protected Field Option: {$m['opt']}");
+                $o->{$m['opt']} = is_bool($o->{$m['opt']}) ? true : ($m['arg'] ?? '');
+                if (in_array($m['opt'], [ 'min', 'max' ])) $o->{$m['opt']} = (float) $o->{$m['opt']};
+            }
+        }
+
+        if ($o->required) $o->req = true;
+        unset($o->required);
+
+        [ $o->value, $o->error ] = process_data_value($o, $input[$o->name] ?? null);
+
+        if ($o->error && !$o->error->hasMessage()) {
+            $o->error->setMessage($messages[$o->error->getCode() . '.' . $o->name]
+                ?? $messages[$o->error->getCode()]
+                ?? ucwords(preg_replace('/[_.-]/', ' ', strtolower($o->error->getCode()))));
+        }
+
+        $response->setField($o);
+    }
+
+    return $response;
+}
+
+/**
+ * Process specific data value.
+ * @param  object $opts  Field information.
+ * @param  mixed  $value Value got from input data.
+ * @return array         A two-entries array:
+ *                       [ mixed $value, ?Microbe_Data_Validation_Response $r ]
+ */
+function process_data_value(object $opts, mixed $value): array
+{
+    if (in_array($opts->type, [ 'str', 'txt', 'uid' ])) {
+
+        $value = is_scalar($value) ? (string) $value : '';
+
+        if ($opts->type === 'str') $value = str_replace([ "\n", "\r", "\t" ], '', $value);
+        else if ($opts->type === 'uid') $value = preg_replace('/[^a-z0-9]/i', '', $value);
+
+        if ($opts->safe) $value = make_str_safe($value);
+        if ($opts->trim) $value = trim($value);
+
+        if ($opts->null && $value === '') $value = null;
+
+    } else if (in_array($opts->type, [ 'int', 'float' ])) {
+
+        $value = is_scalar($value) && preg_match('/^[+-]([0-9]+|[0-9]*\.[0-9]+)$/', $value = (string) $value) ? (float) $value : null;
+
+        if ($value !== null) {
+            if ($opts->type === 'int') $value = (int) $value;
+            if ($opts->min !== null && $value < $opts->min) return [ $value, data_error('below_min_value') ];
+            if ($opts->max !== null && $value > $opts->max) return [ $value, data_error('over_max_value') ];
+        }
+
+    } else if ($opts->type === 'color-hex' || $opts->type === 'color-hex-alpha') {
+
+        $value = is_scalar($value) ? strtolower(trim((string) $value, "# \t\n\r\0\v")) : null;
+        if ($value !== null) {
+            if (!preg_match('/^((?<three>[0-9a-f]{3})|[0-9a-f]{6}|[0-9a-f]{8})$/', $value, $m)) return [ $value, data_error('invalid_hex_color') ];
+            $len = strlen($value);
+            if ($m['three'] ?? null) $value = '#' . $value[0] . $value[0] . $value[1] . $value[1] . $value[2] . $value[2];
+            else if ($opts->type === 'color-hex' && $len !== 6) return [ '#' . $value, data_error('hex_color_with_unexpected_alpha') ];
+            else if ($opts->type === 'color-hex-alpha' && $len !== 8) $value = '#' . $value . 'ff';
+            else $value = '#' . $value;
+        }
+
+    } else throw new Microbe_Exception("Unhandled Data Type: {$opts->type}");
+
+    if ($value === null || $value === '') return [ $value, $opts->req ? data_error('required') : null ];
+
+    foreach ($opts->fn as $fn) {
+        $v = $fn($value);
+        if ($v instanceof Microbe_Data_Validation_Error) return [ $value, $v ];
+        $value = $v;
+    }
+
+    return [ $value, null ];
+}
+
+/**
+ * <USER>
+ * Shortcut to generate a form field error when validating data
+ * using <validate_data()>.
+ * @param  string|null                   $code    Error code.
+ * @param  string|null                   $message Error message.
+ * @return Microbe_Data_Validation_Error          Error instance.
+ */
+function data_error(?string $code = null, ?string $message = null): Microbe_Data_Validation_Error
+{
+    return new Microbe_Data_Validation_Error($code, $message);
+}
+
+/**
+ * <USER>
  * Validate some GET/POST parameters based on the rules given in the array,
  * then return the casted data and the errors if exists.
  * @param  array  $fields       Numerical array containing each field and its
@@ -1159,6 +1317,130 @@ class Microbe_Form_Result
         $values = [];
         foreach ($fields as $fieldName) $values[$fieldName] = $this->data[$fieldName] ?? null;
         return $asObject ? (object) $values : $values;
+    }
+
+}
+
+// ---{ Class: Microbe Data Validation Response }---
+
+class Microbe_Data_Validation_Response
+{
+
+    // ==={ Entity }============================================================
+
+    public array $fields = [];
+    public array $data = [];
+    public array $errors = [];
+
+    public function setField(object $field): self
+    {
+        $this->fields[$field->name] = $field;
+        $this->data[$field->name] = $field->value;
+
+        if ($field->error) $this->errors[$field->name] = $field->error;
+        else if (isset($this->errors[$field->name])) unset($this->errors[$field->name]);
+
+        return $this;
+    }
+
+    public function getErrors(
+        bool $onlyCodes      = false,
+        bool $onlyMessages   = false,
+        bool $asSimpleArrays = false,
+    ): array
+    {
+        if (!$onlyCodes && !$onlyMessages && !$asSimpleArrays) return $this->errors;
+        return array_map(function(Microbe_Data_Validation_Error $error) use ($onlyCodes, $onlyMessages, $asSimpleArrays): string | array | null
+        {
+            if ($asSimpleArrays) return [ 'code' => $error->getCode(), 'message' => $error->getMessage() ];
+            if ($onlyCodes) return $error->getCode();
+            if ($onlyMessages) return $error->getMessage();
+            return null;
+        }, $this->errors);
+    }
+
+    public function getErrorsCodes(): array
+    {
+        return $this->getErrors(onlyCodes: true);
+    }
+
+    public function getErrorsMessages(): array
+    {
+        return $this->getErrors(onlyMessages: true);
+    }
+
+    public function getData(): object
+    {
+        return $this->data;
+    }
+
+    public function get(string $name): mixed
+    {
+        return $this->data[$name] ?? null;
+    }
+
+    public function hasErrors(): bool
+    {
+        return !empty($this->errors);
+    }
+
+    public function isSuccess(): bool
+    {
+        return !$this->hasErrors();
+    }
+
+    public function outputErrorsJson(?string $message = null, bool $close = true): bool
+    {
+        if (!$this->hasErrors()) return false;
+        json_error('form', [
+            'message' => $message ?: t("Please review the errors."),
+            'errors'  => $this->getErrors(asSimpleArrays: true),
+        ], close: $close);
+        return true;
+    }
+
+}
+
+// ---{ Class: Microbe Data Validation Error }---
+
+class Microbe_Data_Validation_Error
+{
+
+    // ==={ Entity }============================================================
+
+    private ?string $code    = null;
+    private ?string $message = null;
+
+    public function __construct(?string $code = null, ?string $message = null)
+    {
+        $this->code = $code;
+        $this->setMessage($message);
+    }
+
+    public function getCode(): ?string
+    {
+        return $this->code;
+    }
+
+    public function setMessage(?string $message = null): self
+    {
+        $this->message = $message;
+        return $this;
+    }
+
+    public function getMessage(): ?string
+    {
+        return $this->message;
+    }
+
+    public function hasMessage(): bool
+    {
+        return $this->getMessage() !== null;
+    }
+
+    public function __toString(): string
+    {
+        return $this->getMessage() ?: '';
     }
 
 }
