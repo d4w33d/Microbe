@@ -412,25 +412,6 @@ function cast_data(object | array $input, mixed $data, bool $trim = true, string
 
 /**
  * <USER>
- * Returns the most contrasted color (white or black), based on a
- * specified color.
- * @param  string       $hex   Hexadecimal color. Hash is optional.
- * @param  bool         $asRgb Returns the result as an RGB triplet instead of
-*                              an hexadecimal color.
- * @return string|array        The hexadecimal color (including leading hash),
- *                             or RGB triplet.
- */
-function contrast_color(string $hex, bool $asRgb = false): string | array
-{
-    list($r, $g, $b) = sscanf(str_replace('#', '', $hex), "%02x%02x%02x");
-    $yiq = (($r * 299) + ($g * 587) + ($b * 114)) / 1000;
-    $contrasted = ($yiq >= 128) ? '#000000' : '#ffffff';
-    if (!$asRgb) return $contrasted;
-    return sscanf($contrasted, "#%02x%02x%02x");
-}
-
-/**
- * <USER>
  * Uncompress a ZIP file into a destination folder.
  * @param  string $zipPath  ZIP file path.
  * @param  string $destPath Folder where the zip should be unzip.
