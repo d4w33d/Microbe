@@ -97,6 +97,21 @@ function is_str_safe(mixed $str): bool
 
 /**
  * <USER>
+ * Remove special quotes, emojis, etc.
+ *   - Unicode letters with accents;
+ *   - Numbers;
+ *   - Everything else should be simple ASCII.
+ * @param  mixed   $str Probably a string.
+ * @return string       Clean ASCII String.
+ */
+function make_str_safe(mixed $str): string
+{
+    if (!is_string($str)) return '';
+    return preg_replace('/[^\p{L}\p{N}\x20-\x7E]/u', '', $str);
+}
+
+/**
+ * <USER>
  * Returns given string after replacement of key-value $params.
  * @param  string $str       String to process.
  * @param  array  $params    Key-Value array of params to replace.
