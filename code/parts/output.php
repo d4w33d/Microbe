@@ -761,6 +761,7 @@ function _icon(mixed $icon, ?string $format = null): void
  *                                     is appent to the data with a new token
  *                                     (the string represents the context
  *                                     if needed).
+ * @param  bool        $close          Close app after echo.
  */
 function json(
     array         $data,
@@ -769,6 +770,7 @@ function json(
     bool          $endingLineFeed = true,
     bool          $dispatchEvents = true,
     bool | string $csrf           = false,
+    bool          $close          = true,
 ): void
 {
     if ($csrf !== false) $data[get_csrf_param_name()] = generate_csrf_token(is_string($csrf) ? $csrf : null);
@@ -777,7 +779,7 @@ function json(
     if ($dispatchEvents) dispatch('before_first_output');
     echo $pretty ? json_encode($data, JSON_PRETTY_PRINT) : json_encode($data);
     if ($endingLineFeed) echo "\n";
-    close();
+    if ($close) close();
 }
 
 /**
@@ -789,12 +791,14 @@ function json(
  * @param  bool|string $csrf   If true or a string, a _csrf parameter
  *                             is appent to the data with a new token
  *                             (the string represents the context if needed).
+ * @param  bool        $close  Close app after echo.
  */
 function json_success(
     array         $data   = [],
     int           $code   = 200,
     bool          $pretty = false,
     bool | string $csrf   = false,
+    bool          $close  = true,
 ): void
 {
     json(array_merge($data, [ 'success' => true ]), code: $code, pretty: $pretty, csrf: $csrf);
@@ -811,6 +815,7 @@ function json_success(
  * @param  bool|string $csrf   If true or a string, a _csrf parameter
  *                             is appent to the data with a new token
  *                             (the string represents the context if needed).
+ * @param  bool        $close  Close app after echo.
  */
 function json_error(
     string | array $error  = 'unknown',
@@ -818,43 +823,47 @@ function json_error(
     int            $code   = 200,
     bool           $pretty = false,
     bool | string  $csrf   = false,
+    bool           $close  = true,
 ): void
 {
     if (is_array($error)) {
         $data = $error;
         $error = 'unknown';
     }
-    json(array_merge($data, [ 'success' => false, 'error' => $error ]), code: $code, pretty: $pretty, csrf: $csrf);
+    json(array_merge($data, [ 'success' => false, 'error' => $error ]), code: $code, pretty: $pretty, csrf: $csrf, close: $close);
 }
 
 /**
  * <USER>
  * Display a JSON error "unauthorized" with an optional message.
  * @param  string $message  Error message.
+ * @param  bool   $close    Close app after echo.
  */
-function json_403(?string $message = null): void
+function json_403(?string $message = null, bool $close = true): void
 {
-    json_error('unauthorized', $message ? [ 'message' => $message ] : []);
+    json_error('unauthorized', $message ? [ 'message' => $message ] : [], close: $close);
 }
 
 /**
  * <USER>
  * Display a JSON error "not_found" with an optional message.
  * @param  string $message  Error message.
+ * @param  bool   $close    Close app after echo.
  */
-function json_404(?string $message = null): void
+function json_404(?string $message = null, bool $close = true): void
 {
-    json_error('not_found', $message ? [ 'message' => $message ] : []);
+    json_error('not_found', $message ? [ 'message' => $message ] : [], close: $close);
 }
 
 /**
  * <USER>
  * Display a JSON error "internal_error" with an optional message.
  * @param  string $message  Error message.
+ * @param  bool   $close    Close app after echo.
  */
-function json_500(?string $message = null): void
+function json_500(?string $message = null, bool $close = true): void
 {
-    json_error('internal_error', $message ? [ 'message' => $message ] : []);
+    json_error('internal_error', $message ? [ 'message' => $message ] : [], close: $close);
 }
 
 /**
