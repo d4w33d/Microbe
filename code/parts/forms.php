@@ -108,7 +108,7 @@ function process_data_value(object $opts, mixed $value): array
         if ($opts->type === 'str') $value = str_replace([ "\n", "\r", "\t" ], ' ', $value);
         else if ($opts->type === 'uid') $value = preg_replace('/[^a-z0-9]/i', '', $value);
 
-        if ($opts->safe) $value = make_str_safe($value);
+        if ($opts->safe) $value = make_str_safe($value, allowLinesFeeds: $opts->type === 'txt');
         if ($opts->trim) $value = trim($value);
 
         if ($opts->null && $value === '') $value = null;
