@@ -2004,7 +2004,11 @@ class Microbe_Entity
         if ($position === 'first' || $position === 'top') $position = 0;
         else if ($position === 'last' || $position === 'bottom') $position = db_last_position(static::TABLE_NAME, $where, $positionProp->db_field_name) + 1;
         else if (is_int_val($position)) $position = (int) $position;
-        else $position = (((int) $this->get(static::FIELD_POSITION)) ?: 0) + ((int) $position);
+        else {
+            if ($position === 'up') $position = '-1';
+            else if ($position === 'down') $position = '+1';
+            $position = (((int) $this->get(static::FIELD_POSITION)) ?: 0) + ((int) $position);
+        }
 
         db_set_position(
             tableName:          static::TABLE_NAME,
