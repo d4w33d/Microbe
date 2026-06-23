@@ -122,6 +122,9 @@ function process_data_value(object $opts, mixed $value): array
             if ($opts->min !== null && $value < $opts->min) return [ $value, data_error('below_min_value') ];
             if ($opts->max !== null && $value > $opts->max) return [ $value, data_error('over_max_value') ];
         }
+    } else if ($opts->type === 'bool') {
+
+        $value = value_seems_true($value);
 
     } else if ($opts->type === 'color-hex' || $opts->type === 'color-hex-alpha') {
 
