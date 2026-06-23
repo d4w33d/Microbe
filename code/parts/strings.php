@@ -86,13 +86,14 @@ function strip_blocks(string $str): string
  *   - Unicode letters with accents;
  *   - Numbers;
  *   - Everything else should be simple ASCII.
- * @param  mixed   $str Probably a string.
- * @return bool         Is string safe or not.
+ * @param  mixed   $str             Probably a string.
+ * @param  bool    $allowLinesFeeds Allow \r and \n in string.
+ * @return bool                     Is string safe or not.
  */
-function is_str_safe(mixed $str): bool
+function is_str_safe(mixed $str, bool $allowLinesFeeds = true): bool
 {
     if (!is_string($str)) return false;
-    return (bool) preg_match('/^[\p{L}\p{N}\x20-\x7E]*$/u', $str);
+    return (bool) preg_match($allowLinesFeeds ? '/[^\p{L}\p{N}\x20-\x7E\x0A\x0D]/u' : '/^[\p{L}\p{N}\x20-\x7E]*$/u', $str);
 }
 
 /**
@@ -101,13 +102,14 @@ function is_str_safe(mixed $str): bool
  *   - Unicode letters with accents;
  *   - Numbers;
  *   - Everything else should be simple ASCII.
- * @param  mixed   $str Probably a string.
- * @return string       Clean ASCII String.
+ * @param  mixed   $str             Probably a string.
+ * @param  bool    $allowLinesFeeds Allow \r and \n in string.
+ * @return string                   Clean ASCII String.
  */
-function make_str_safe(mixed $str): string
+function make_str_safe(mixed $str, bool $allowLinesFeeds = true): string
 {
     if (!is_string($str)) return '';
-    return preg_replace('/[^\p{L}\p{N}\x20-\x7E]/u', '', $str);
+    return preg_replace($allowLinesFeeds ? '/[^\p{L}\p{N}\x20-\x7E\x0A\x0D]/u' : '/^[\p{L}\p{N}\x20-\x7E]*$/u', '', $str);
 }
 
 /**
