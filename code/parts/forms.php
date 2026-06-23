@@ -105,7 +105,7 @@ function process_data_value(object $opts, mixed $value): array
 
         $value = is_scalar($value) ? (string) $value : '';
 
-        if ($opts->type === 'str') $value = str_replace([ "\n", "\r", "\t" ], '', $value);
+        if ($opts->type === 'str') $value = str_replace([ "\n", "\r", "\t" ], ' ', $value);
         else if ($opts->type === 'uid') $value = preg_replace('/[^a-z0-9]/i', '', $value);
 
         if ($opts->safe) $value = make_str_safe($value);
