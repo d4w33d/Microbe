@@ -90,10 +90,10 @@ function strip_blocks(string $str): string
  * @param  bool    $allowLinesFeeds Allow \r and \n in string.
  * @return bool                     Is string safe or not.
  */
-function is_str_safe(mixed $str, bool $allowLinesFeeds = true): bool
+function is_str_safe(mixed $str, bool $allowLinesFeeds = false): bool
 {
     if (!is_string($str)) return false;
-    return (bool) preg_match($allowLinesFeeds ? '/[^\p{L}\p{N}\x20-\x7E\x0A\x0D]/u' : '/^[\p{L}\p{N}\x20-\x7E]*$/u', $str);
+    return (bool) preg_match($allowLinesFeeds ? '/^[\p{L}\p{N}\x20-\x7E\x0A\x0D]*$/u' : '/^[\p{L}\p{N}\x20-\x7E]*$/u', $str);
 }
 
 /**
@@ -106,10 +106,10 @@ function is_str_safe(mixed $str, bool $allowLinesFeeds = true): bool
  * @param  bool    $allowLinesFeeds Allow \r and \n in string.
  * @return string                   Clean ASCII String.
  */
-function make_str_safe(mixed $str, bool $allowLinesFeeds = true): string
+function make_str_safe(mixed $str, bool $allowLinesFeeds = false): string
 {
     if (!is_string($str)) return '';
-    return preg_replace($allowLinesFeeds ? '/[^\p{L}\p{N}\x20-\x7E\x0A\x0D]/u' : '/^[\p{L}\p{N}\x20-\x7E]*$/u', '', $str);
+    return preg_replace($allowLinesFeeds ? '/[^\p{L}\p{N}\x20-\x7E\x0A\x0D]/u' : '/[^\p{L}\p{N}\x20-\x7E]/u', '', $str);
 }
 
 /**
