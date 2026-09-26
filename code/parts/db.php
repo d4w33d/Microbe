@@ -173,15 +173,16 @@ function db_get_arg_type(mixed $arg, ?string $k = null, ?string $sql = null): in
  * <USER>
  * Escape the parameter value for usage in MySQL strings.
  * @param  mixed  $str Value.
+ * @param  string $ref The database reference. Default is 'main'.
  * @return string      MySQL escaped string.
  */
-function db_esc(mixed $str): string
+function db_esc(mixed $str, string $ref = 'main'): string
 {
     if ($str === null) return 'NULL';
     if ($str === true) return 'TRUE';
     if ($str === false) return 'FALSE';
     if (is_numeric($str)) return (string) $str;
-    return db_dbh()->quote($str);
+    return db_dbh($ref)->quote($str);
 }
 
 /**
@@ -282,7 +283,7 @@ function db_query(string $sql, array $vars = [], string $ref = 'main'): ?PDOStat
         if ($v instanceof DateTime) $v = $v->format('Y-m-d H:i:s');
         $smt->bindValue(':' . $k, $v, db_get_arg_type($v, $k, $sql));
     }
-    cfg('@core.db.last_query', db_compute_sql($sql, $vars));
+    cfg('@core.db.last_query', db_compute_sql($sql, $vars, ref: $ref));
     cfg('@core.db.last_statement', $smt);
     try {
         $smt->execute();
@@ -290,7 +291,7 @@ function db_query(string $sql, array $vars = [], string $ref = 'main'): ?PDOStat
         throw new Microbe_Exception($e->getMessage()
             . "\n\nSQL Query:\n\n" . $sql
             . "\n\nVariables:\n\n" . print_r($vars, true)
-            . "\n\nComputed SQL Query:\n\n" . db_compute_sql($sql, $vars));
+            . "\n\nComputed SQL Query:\n\n" . db_compute_sql($sql, $vars, ref: $ref));
     }
     return $smt;
 }
@@ -320,11 +321,12 @@ function db_last_statement(): ?PDOStatement
  * Compute SQL with parameters and returns a ready-to-use query.
  * @param  string $sql    SQL query.
  * @param  array  $params Parameters to be applyed on query.
+ * @param  string $ref    The database reference. Default is 'main'.
  * @return string         Computed SQL.
  */
-function db_compute_sql(string $sql, array $params = []): string
+function db_compute_sql(string $sql, array $params = [], string $ref = 'main'): string
 {
-    foreach ($params as $k => $v) $sql = str_replace(':' . $k, db_esc($v), $sql);
+    foreach ($params as $k => $v) $sql = str_replace(':' . $k, db_esc($v, ref: $ref), $sql);
     return $sql;
 }
 
