@@ -289,8 +289,6 @@ function remember_pow_signature(string $signature): void
     $all = get_session_var('core.pow.used') ?: [];
     $all[$signature] = time();
     set_session_var('core.pow.used', $all);
-
-    if (!$pow) delete_session_var('core.pow.used');
 }
 
 function is_pow_signature_used(string $signature): bool
