@@ -62,17 +62,12 @@ function string_seems_random(string $str): bool
     if (!preg_match_all('/\b\p{L}{8,}\b/u', $str, $words)) return false;
 
     foreach ($words[0] as $word) {
-        if (preg_match('/[bcdfghjklmnpqrstvwxz]{4,}/i', $word)) { echo 'A';var_dump($word); return true; }
-        if (preg_match('/[aeiouy]{4,}/i', $word)) { echo 'B';var_dump($word); return true; }
+        if (preg_match('/[bcdfghjklmnpqrstvwxz]{5,}/i', $word)) { echo 'A';var_dump($word); return true; }
+        if (preg_match('/[aeiouy]{5,}/i', $word)) { echo 'B';var_dump($word); return true; }
 
         $transitions = preg_match_all('/([a-z][A-Z]|[A-Z][a-z])/', $word);
-        if ($transitions >= 4) { echo 'C';var_dump($word); return true; }
+        if ($transitions >= 5) { echo 'C';var_dump($word); return true; }
     }
-
-
-
-
-
 
     return false;
 }
