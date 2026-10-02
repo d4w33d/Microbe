@@ -59,9 +59,8 @@ function _unesc(mixed $s): void
  */
 function string_seems_random(string $str): bool
 {
-    if (!preg_match_all('/\b\p{L}{8,}\b/u', $str, $words)) return false;
-
     $str = remove_urls_from_string($str);
+    if (!preg_match_all('/\b\p{L}{8,}\b/u', $str, $words)) return false;
 
     foreach ($words[0] as $word) {
         if (preg_match('/[bcdfghjklmnpqrstvwxz]{5,}/i', $word)) { echo 'A';var_dump($word); return true; }
