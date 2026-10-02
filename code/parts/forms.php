@@ -212,6 +212,28 @@ function validate(array $fields, bool $dataAsArray = false): array
 
 /**
  * <USER>
+ * Check if a string seems to be generated randomly (with multiple adjacent
+ * consonants or vowels, or with strange case change).
+ * @param  string $str String to verify.
+ * @return bool        True if the string is suspect.
+ */
+function string_seems_random(string $str): bool
+{
+    if (!preg_match_all('/\b\p{L}{8,}\b/u', $str, $words, PREG_SET_ORDER)) return false;
+
+    foreach ($words as $word) {
+        if (preg_match('/[bcdfghjklmnpqrstvwxz]{4,}/i', $word)) return true;
+        if (preg_match('/[aeiouy]{4,}/i', $word)) return true;
+
+        $transitions = preg_match_all('/([a-z][A-Z]|[A-Z][a-z])/', $word);
+        if ($transitions >= 4) return true;
+    }
+
+    return false;
+}
+
+/**
+ * <USER>
  * Returns a new Microbe_Form instance.
  * @param  string|null  $name Name of the form (useful for storing results).
  * @return Microbe_Form       Form instance.
