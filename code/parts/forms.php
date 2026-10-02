@@ -265,6 +265,171 @@ function get_form(string $name, array $args = []): Microbe_Form
     return $form;
 }
 
+
+
+
+
+if (!defined('MB_POW_TTL')) define('MB_POW_TTL', 3600);
+if (!defined('MB_POW_DIFFICULTY')) define('MB_POW_DIFFICULTY', '0000');
+
+
+
+function render_pow(): ?string
+{
+    //
+}
+
+function generate_pow_payload(): string
+{
+    $timestamp = time();
+    $salt = bin2hex(random_bytes(8));
+    $signature = hash_hmac('sha256', $timestamp . '.' . $salt, cfg('@core.security.secrets.pow'));
+    return $timestamp . '.' . $salt . '.' . $signature;
+}
+
+function remember_pow_signature(string $signature): void
+{
+    $all = get_session_var('core.pow.used') ?: [];
+    $all[$signature] = time();
+    set_session_var('core.pow.used', $all);
+
+    if (!$pow) delete_session_var('core.pow.used');
+}
+
+function is_pow_signature_used(string $signature): bool
+{
+    $now = time();
+    $stored = get_session_var('core.pow.used') ?: [];
+    $all = array_filter($stored, function(int $t) use ($now): bool
+    {
+        return $now > ($t + MB_POW_TTL);
+    });
+
+    if (count($stored) !== count($all)) {
+        if (!$all) delete_session_var('core.pow.used');
+        else set_session_var('core.pow.used');
+    }
+
+    return isset($all[$signature]);
+}
+
+function check_pow(
+    string $payload,
+    string $nonce,
+    int    $minDuration = 3,
+    int    $maxDuration = 600,
+): bool {
+    if (!$payload || !$nonce) return false;
+
+    $parts = explode('.', $payload);
+    if (count($parts) !== 3) return false;
+
+    list($timestamp, $salt, $signature) = $parts;
+
+    // One usage check
+    if (is_pow_signature_used($signature)) return false;
+
+    // HMAC integrity check
+    $expectedSignature = hash_hmac('sha256', $timestamp . '.' . $salt, cfg('@core.security.secrets.pow'));
+    if (!hash_equals($expectedSignature, $signature)) return false;
+
+    // Time check
+    $elapsed = time() - ((int) $timestamp);
+    if ($elapsed < $minDuration || $elapsed > $maxDuration) return false;
+
+    // PoW validity check
+    $hash = hash('sha256', $payload . $nonce);
+    if (str_starts_with($hash, MB_POW_DIFFICULTY)) {
+        remember_pow_signature($signature);
+        return true;
+    }
+
+    return false;
+}
+
+function render_pow_js(bool $htmlTags = true, bool $return = false, bool $force = false): ?string
+{
+    if (stored('core.pow.rendered_js')) return $return ? '' : null;
+    stored('core.pow.rendered_js', true);
+
+    $powDifficulty = MB_POW_DIFFICULTY;
+
+    $snippet = '';
+    if ($htmlTags) $snippet = '<script>';
+    $snippet .= <<<JAVASCRIPT
+        (function() {
+            if (!window.hasOwnProperty("_mb")) window._mb = {};
+            window._mb.pow = {
+
+                DIFFICULTY: "{$powDifficulty}",
+
+                init() {
+                    [...document.querySelectorAll("form[data-mb-pow]")].forEach((form) => {
+                        this.setup(form);
+                    });
+                },
+
+                setup(form) {
+                    const payload = form.getAttribute("data-mb-pow");
+                    if (!payload) return;
+
+                    const bt = form.querySelector("[data-mb-pow-submit]")
+                            || form.querySelector("[type='submit']");
+
+                    const msg = form.querySelector("[data-mb-pow-status]");
+
+                    const payloadInput = document.createElement("input");
+                    payloadInput.type = "hidden";
+                    payloadInput.name = "_mb_pow_payload";
+                    payloadInput.value = payload;
+                    bt.parentNode.appendChild(payloadInput);
+
+                    const nonceInput = document.createElement("input");
+                    nonceInput.type = "hidden";
+                    nonceInput.name = "_mb_pow_nonce";
+                    nonceInput.value = "";
+                    bt.parentNode.appendChild(nonceInput);
+
+                    if (bt) bt.disabled = true;
+                    form.classList.add("mb-pow-resolving");
+
+                    setTimeout(async () => {
+                        const nonce = await resolve(payload);
+                        nonceInput.value = nonce;
+
+                        if (bt) bt.disabled = false;
+                        if (msg) msg.parentNode.removeChild(msg);
+                        form.classList.remove("mb-pow-resolving");
+                        form.classList.add("mb-pow-ready");
+                    }, 50);
+                },
+
+                async resolve(payload) {
+                    let nonce = 0;
+                    const encoder = new TextEncoder();
+
+                    while (true) {
+                        const data = encoder.encode(payload + nonce);
+                        const buffer = await crypto.subtle.digest("SHA-256", data);
+                        const hashArray = Array.from(new Uint8Array(buffer));
+                        const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+
+                        if (hashHex.startsWith(this.DIFFICULTY)) return nonce.toString();
+                        nonce++;
+                    }
+                },
+
+            };
+            document.addEventListener("DOMContentLoaded", () => window._mb.pow.init());
+        })();
+    JAVASCRIPT;
+    $snippet .= '</script>';
+
+    if ($return) return $snippet;
+    echo $snippet;
+    return null;
+}
+
 // =============================================================================
 // ---{ Classes }---------------------------------------------------------------
 

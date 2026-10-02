@@ -406,6 +406,9 @@ listen('register_cfg_snippets', function(): array
     return [
         'security' => [
             'salt'      => password(32),
+            'secrets'   => [
+                'pow' => password(64),
+            ],
             'passwords' => [
                 'hash' => [
                     'algorithm' => 'sha256',
