@@ -271,11 +271,10 @@ function get_form(string $name, array $args = []): Microbe_Form
     return $form;
 }
 
-
-
-
-
-
+/**
+ * Save used PoW signature in session.
+ * @param  string $signature PoW signature.
+ */
 function remember_pow_signature(string $signature): void
 {
     $all = get_session_var('core.pow.used') ?: [];
@@ -283,6 +282,11 @@ function remember_pow_signature(string $signature): void
     set_session_var('core.pow.used', $all);
 }
 
+/**
+ * Check in session if PoW signature has been used.
+ * @param  string  $signature PoW signature.
+ * @return boolean            Was used or not.
+ */
 function is_pow_signature_used(string $signature): bool
 {
     $now = time();
@@ -300,6 +304,11 @@ function is_pow_signature_used(string $signature): bool
     return isset($all[$signature]);
 }
 
+/**
+ * <USER>
+ * Generate a PoW payload to be served in a form as an hidden input.
+ * @return PoW payload.
+ */
 function generate_pow_payload(): string
 {
     $timestamp = time();
@@ -308,6 +317,19 @@ function generate_pow_payload(): string
     return $timestamp . '.' . $salt . '.' . $signature;
 }
 
+/**
+ * <USER>
+ * Validate a PoW's nonce against its payload.
+ * @param
+ * @param string|null $payload     If null, _mb_pow_payload from $_GET/$_POST
+ *                                 will be used instead.
+ * @param string|null $nonce       If null, _mb_pow_nonce from $_GET/$_POST
+ *                                 will be used instead.
+ * @param int         $minDuration Minimum delay of the PoW result (less is
+ *                                 too short to be a form sent by a human).
+ * @param int         $maxDuration Maximum delay of the PoW result (more is
+ *                                 not a normal device).
+ */
 function check_pow(
     ?string $payload     = null,
     ?string $nonce       = null,
@@ -346,10 +368,21 @@ function check_pow(
     return false;
 }
 
+/**
+ * <USER>
+ * Display or returns the JavaScript snippet for the PoW processing.
+ * @param  bool        $htmlTags Include <script> and </script>.
+ * @param  bool        $return   Return as a string instead of echoing it.
+ * @param  bool        $force    Force echoing it even if it's already done.
+ * @return string|null           JavaScript with or without HTML tags,
+ *                               or null if echoed.
+ */
 function render_pow_js(bool $htmlTags = true, bool $return = false, bool $force = false): ?string
 {
-    if (stored('core.pow.rendered_js')) return $return ? '' : null;
-    stored('core.pow.rendered_js', true);
+    if (!$return) {
+        if (stored('core.pow.rendered_js')) return null;
+        stored('core.pow.rendered_js', true);
+    }
 
     $powDifficulty = MB_POW_DIFFICULTY;
 
