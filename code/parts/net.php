@@ -73,6 +73,17 @@ function fetch_urls_in_string(
 
 /**
  * <USER>
+ * Try to remove all URLs in a specified string.
+ * @param  string $str String to process..
+ * @return string      String without URL.
+ */
+function remove_urls_from_string(string $str): array
+{
+    return preg_replace('#\b(?:https?|s?ftp|ssh)://[^,\s()<>]+(?:\([\w]+\)|(?:[^,[:punct:]\s]|/))#ui', '', $str);
+}
+
+/**
+ * <USER>
  * @param  string $str URL or domain name.
  * @return string      Domain name, or null if $str doesn't contains one.
  */

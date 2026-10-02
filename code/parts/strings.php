@@ -61,6 +61,8 @@ function string_seems_random(string $str): bool
 {
     if (!preg_match_all('/\b\p{L}{8,}\b/u', $str, $words)) return false;
 
+    $str = remove_urls_from_string($str);
+
     foreach ($words[0] as $word) {
         if (preg_match('/[bcdfghjklmnpqrstvwxz]{5,}/i', $word)) { echo 'A';var_dump($word); return true; }
         if (preg_match('/[aeiouy]{5,}/i', $word)) { echo 'B';var_dump($word); return true; }
