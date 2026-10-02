@@ -314,11 +314,15 @@ function is_pow_signature_used(string $signature): bool
 }
 
 function check_pow(
-    string $payload,
-    string $nonce,
-    int    $minDuration = 3,
-    int    $maxDuration = 600,
+    ?string $payload     = null,
+    ?string $nonce       = null,
+    int     $minDuration = 3,
+    int     $maxDuration = 600,
 ): bool {
+
+    if ($payload === null) $payload = get_nullable_str('_mb_pow_payload');
+    if ($nonce === null) $nonce = get_nullable_str('_mb_pow_nonce');
+
     if (!$payload || !$nonce) return false;
 
     $parts = explode('.', $payload);
