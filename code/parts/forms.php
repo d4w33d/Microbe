@@ -276,14 +276,6 @@ function get_form(string $name, array $args = []): Microbe_Form
 
 
 
-function generate_pow_payload(): string
-{
-    $timestamp = time();
-    $salt = bin2hex(random_bytes(8));
-    $signature = hash_hmac('sha256', $timestamp . '.' . $salt, cfg('@security.secrets.pow'));
-    return $timestamp . '.' . $salt . '.' . $signature;
-}
-
 function remember_pow_signature(string $signature): void
 {
     $all = get_session_var('core.pow.used') ?: [];
@@ -295,10 +287,10 @@ function is_pow_signature_used(string $signature): bool
 {
     $now = time();
     $stored = get_session_var('core.pow.used') ?: [];
-    $all = array_filter($stored, function(int $t) use ($now): bool
+    $all = $stored;/*array_filter($stored, function(int $t) use ($now): bool
     {
         return $now > ($t + MB_POW_TTL);
-    });
+    });*/
 
     if (count($stored) !== count($all)) {
         if (!$all) delete_session_var('core.pow.used');
@@ -306,6 +298,14 @@ function is_pow_signature_used(string $signature): bool
     }
 
     return isset($all[$signature]);
+}
+
+function generate_pow_payload(): string
+{
+    $timestamp = time();
+    $salt = bin2hex(random_bytes(8));
+    $signature = hash_hmac('sha256', $timestamp . '.' . $salt, cfg('@security.secrets.pow'));
+    return $timestamp . '.' . $salt . '.' . $signature;
 }
 
 function check_pow(
