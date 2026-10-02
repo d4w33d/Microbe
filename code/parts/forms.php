@@ -1,6 +1,12 @@
 <?php
 
 // =============================================================================
+// ---{ Constants }-------------------------------------------------------------
+
+if (!defined('MB_POW_TTL')) define('MB_POW_TTL', 3600);
+if (!defined('MB_POW_DIFFICULTY')) define('MB_POW_DIFFICULTY', '0000');
+
+// =============================================================================
 // ---{ Functions }-------------------------------------------------------------
 
 /**
@@ -269,15 +275,6 @@ function get_form(string $name, array $args = []): Microbe_Form
 
 
 
-if (!defined('MB_POW_TTL')) define('MB_POW_TTL', 3600);
-if (!defined('MB_POW_DIFFICULTY')) define('MB_POW_DIFFICULTY', '0000');
-
-
-
-function render_pow(): ?string
-{
-    //
-}
 
 function generate_pow_payload(): string
 {
@@ -368,19 +365,19 @@ function render_pow_js(bool $htmlTags = true, bool $return = false, bool $force 
                 DIFFICULTY: "{$powDifficulty}",
 
                 init() {
-                    [...document.querySelectorAll("form[data-mb-pow]")].forEach((form) => {
+                    [...document.querySelectorAll("form[data-pow]")].forEach((form) => {
                         this.setup(form);
                     });
                 },
 
                 setup(form) {
-                    const payload = form.getAttribute("data-mb-pow");
+                    const payload = form.getAttribute("data-pow");
                     if (!payload) return;
 
-                    const bt = form.querySelector("[data-mb-pow-submit]")
+                    const bt = form.querySelector("[data-pow-submit]")
                             || form.querySelector("[type='submit']");
 
-                    const msg = form.querySelector("[data-mb-pow-status]");
+                    const msg = form.querySelector("[data-pow-status]");
 
                     const payloadInput = document.createElement("input");
                     payloadInput.type = "hidden";
@@ -395,7 +392,7 @@ function render_pow_js(bool $htmlTags = true, bool $return = false, bool $force 
                     bt.parentNode.appendChild(nonceInput);
 
                     if (bt) bt.disabled = true;
-                    form.classList.add("mb-pow-resolving");
+                    form.classList.add("pow-resolving");
 
                     setTimeout(async () => {
                         const nonce = await resolve(payload);
@@ -403,8 +400,8 @@ function render_pow_js(bool $htmlTags = true, bool $return = false, bool $force 
 
                         if (bt) bt.disabled = false;
                         if (msg) msg.parentNode.removeChild(msg);
-                        form.classList.remove("mb-pow-resolving");
-                        form.classList.add("mb-pow-ready");
+                        form.classList.remove("pow-resolving");
+                        form.classList.add("pow-ready");
                     }, 50);
                 },
 
