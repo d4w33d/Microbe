@@ -395,7 +395,7 @@ function render_pow_js(bool $htmlTags = true, bool $return = false, bool $force 
                     form.classList.add("pow-resolving");
 
                     setTimeout(async () => {
-                        const nonce = await resolve(payload);
+                        const nonce = await this.resolve(payload);
                         nonceInput.value = nonce;
 
                         if (bt) bt.disabled = false;
