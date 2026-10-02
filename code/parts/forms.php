@@ -280,7 +280,7 @@ function generate_pow_payload(): string
 {
     $timestamp = time();
     $salt = bin2hex(random_bytes(8));
-    $signature = hash_hmac('sha256', $timestamp . '.' . $salt, cfg('@core.security.secrets.pow'));
+    $signature = hash_hmac('sha256', $timestamp . '.' . $salt, cfg('@security.secrets.pow'));
     return $timestamp . '.' . $salt . '.' . $signature;
 }
 
@@ -331,7 +331,7 @@ function check_pow(
     if (is_pow_signature_used($signature)) return false;
 
     // HMAC integrity check
-    $expectedSignature = hash_hmac('sha256', $timestamp . '.' . $salt, cfg('@core.security.secrets.pow'));
+    $expectedSignature = hash_hmac('sha256', $timestamp . '.' . $salt, cfg('@security.secrets.pow'));
     if (!hash_equals($expectedSignature, $signature)) return false;
 
     // Time check
