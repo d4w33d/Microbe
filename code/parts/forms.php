@@ -287,10 +287,10 @@ function is_pow_signature_used(string $signature): bool
 {
     $now = time();
     $stored = get_session_var('core.pow.used') ?: [];
-    $all = $stored;/*array_filter($stored, function(int $t) use ($now): bool
+    $all = array_filter($stored, function(int $t) use ($now): bool
     {
-        return $now > ($t + MB_POW_TTL);
-    });*/
+        return $now <= ($t + MB_POW_TTL);
+    });
 
     if (count($stored) !== count($all)) {
         if (!$all) delete_session_var('core.pow.used');
