@@ -219,9 +219,9 @@ function validate(array $fields, bool $dataAsArray = false): array
  */
 function string_seems_random(string $str): bool
 {
-    if (!preg_match_all('/\b\p{L}{8,}\b/u', $str, $words, PREG_SET_ORDER)) return false;
+    if (!preg_match_all('/\b\p{L}{8,}\b/u', $str, $words)) return false;
 
-    foreach ($words as $word) {
+    foreach ($words[0] as $word) {
         if (preg_match('/[bcdfghjklmnpqrstvwxz]{4,}/i', $word)) return true;
         if (preg_match('/[aeiouy]{4,}/i', $word)) return true;
 
