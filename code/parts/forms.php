@@ -436,6 +436,27 @@ function render_pow_js(bool $htmlTags = true, bool $return = false, bool $force 
                     }, 50);
                 },
 
+                renew(form, payload) {
+                    const payloadInput = form.querySelector("[name='_mb_pow_payload']");
+                    const nonceInput = form.querySelector("[name='_mb_pow_nonce']");
+
+                    if (!payloadInput || !nonceInput) return;
+
+                    payloadInput.value = payload;
+                    nonceInput.value = "";
+
+                    form.classList.add("pow-resolving");
+                    form.classList.remove("pow-ready");
+
+                    setTimeout(async () => {
+                        const nonce = await this.resolve(payload);
+                        nonceInput.value = nonce;
+
+                        form.classList.remove("pow-resolving");
+                        form.classList.add("pow-ready");
+                    }, 50);
+                },
+
                 async resolve(payload) {
                     let nonce = 0;
                     const encoder = new TextEncoder();
