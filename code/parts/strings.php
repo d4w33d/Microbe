@@ -52,6 +52,28 @@ function _unesc(mixed $s): void
 
 /**
  * <USER>
+ * Check if a string seems to be generated randomly (with multiple adjacent
+ * consonants or vowels, or with strange case change).
+ * @param  string $str String to verify.
+ * @return bool        True if the string is suspect.
+ */
+function string_seems_random(string $str): bool
+{
+    if (!preg_match_all('/\b\p{L}{8,}\b/u', $str, $words)) return false;
+
+    foreach ($words[0] as $word) {
+        if (preg_match('/[bcdfghjklmnpqrstvwxz]{4,}/i', $word)) { var_dump($word); return true; }
+        if (preg_match('/[aeiouy]{4,}/i', $word)) { var_dump($word); return true; }
+
+        $transitions = preg_match_all('/([a-z][A-Z]|[A-Z][a-z])/', $word);
+        if ($transitions >= 4) { var_dump($word); return true; }
+    }
+
+    return false;
+}
+
+/**
+ * <USER>
  * Remove block tags from HTML string.
  * @param  string $str String to clean.
  * @return string      String cleaned.
