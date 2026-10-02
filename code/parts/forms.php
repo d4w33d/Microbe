@@ -302,7 +302,7 @@ function is_pow_signature_used(string $signature): bool
 
     if (count($stored) !== count($all)) {
         if (!$all) delete_session_var('core.pow.used');
-        else set_session_var('core.pow.used');
+        else set_session_var('core.pow.used', $all);
     }
 
     return isset($all[$signature]);
