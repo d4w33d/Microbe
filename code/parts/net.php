@@ -77,7 +77,7 @@ function fetch_urls_in_string(
  * @param  string $str String to process..
  * @return string      String without URL.
  */
-function remove_urls_from_string(string $str): array
+function remove_urls_from_string(string $str): string
 {
     return preg_replace('#\b(?:https?|s?ftp|ssh)://[^,\s()<>]+(?:\([\w]+\)|(?:[^,[:punct:]\s]|/))#ui', '', $str);
 }
