@@ -454,14 +454,17 @@ function render_pow_js(bool $htmlTags = true, bool $return = false, bool $force 
                             this.runResolve();
                         });
 
-                        const check = document.createElement("span");
-                        this.$.check.appendChild(check);
+                        const icon = document.createElement("span");
+                        icon.classList.add("pow-check-icon");
+                        this.$.check.appendChild(icon);
 
-                        const checkLabel = document.createElement("span");
-                        checkLabel.innerText = this.labels.check_alt;
-                        check.appendChild(checkLabel);
+                        const iconLabel = document.createElement("span");
+                        iconLabel.classList.add("pow-check-icon-label");
+                        iconLabel.innerText = this.labels.check_alt;
+                        icon.appendChild(iconLabel);
 
                         const checkLabelContainer = document.createElement("span");
+                        checkLabelContainer.classList.add("pow-check-label");
                         this.$.check.appendChild(checkLabelContainer);
 
                         this.$.checkLabel = document.createElement("span");
