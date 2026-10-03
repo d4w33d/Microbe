@@ -387,12 +387,12 @@ function render_pow_js(bool $htmlTags = true, bool $return = false, bool $force 
     $powDifficulty = MB_POW_DIFFICULTY;
 
     $labelsJSON = json_encode([
-        'loading'   => t("Loading..."),
-        'ready'     => t("I'm not a robot"),
-        'verifying' => t("Verifying..."),
-        'error'     => t("Unable to confirm you are human"),
-        'success'   => t("Success!"),
-        'check_alt' => t("Click to confirm you are not a robot"),
+        'status_loading'   => t("Loading..."),
+        'status_ready'     => t("I'm not a robot"),
+        'status_resolving' => t("Verifying..."),
+        'status_resolved'  => t("Success!"),
+        'status_error'     => t("Unable to confirm you are human"),
+        'check_alt'        => t("Click to confirm you are not a robot"),
     ]);
 
     $snippet = '';
@@ -409,7 +409,15 @@ function render_pow_js(bool $htmlTags = true, bool $return = false, bool $force 
                     this.difficulty = "{$powDifficulty}";
                     this.mode = "idle";
 
-                    this.$ = { form: form };
+                    this.$ = {
+                        form:           form,
+                        submit:         null,
+                        payload:        null,
+                        nonce:          null,
+                        checkContainer: null,
+                        check:          null,
+                        checkLabel:     null,
+                    };
 
                     this.$.submit = this.$.form.querySelector("[data-pow-submit]")
                                  || this.$.form.querySelector("[type='submit']");
@@ -483,9 +491,10 @@ function render_pow_js(bool $htmlTags = true, bool $return = false, bool $force 
                 }
 
                 setStatus(status) {
-                    [ "loading", "ready", "resolving", "resolved", "success", "error" ].forEach((cl) => this.$.form.classList.remove("pow-" + cl));
+                    [ "loading", "ready", "resolving", "resolved", "error" ].forEach((cl) => this.$.form.classList.remove("pow-" + cl));
                     this.$.form.classList.add("pow-" + status);
-                    if (status === "success" && this.$.submit) this.$.submit.disabled = true;
+                    if (this.$.submit) this.$.submit.disabled = status !== "resolved";
+                    if (this.$.checkLabel) this.$.checkLabel.innerText = this.labels["status_" + status];
                 }
 
                 runResolve() {
