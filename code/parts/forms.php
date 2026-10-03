@@ -370,6 +370,55 @@ function check_pow(
 
 /**
  * <USER>
+ * Display or returns the CSS snippet for the PoW processing.
+ * @param  bool        $htmlTags Include <style> and </style>.
+ * @param  bool        $return   Return as a string instead of echoing it.
+ * @param  bool        $force    Force echoing it even if it's already done.
+ * @return string|null           CSS with or without HTML tags,
+ *                               or null if echoed.
+ */
+function render_pow_css(bool $htmlTags = true, bool $return = false, bool $force = false): ?string
+{
+    if (!$return) {
+        if (stored('core.pow.rendered_css')) return null;
+        stored('core.pow.rendered_css', true);
+    }
+
+    $snippet = '';
+    if ($htmlTags) $snippet = '<style>';
+    $snippet .= <<<CSS
+        button.pow-check { display: flex; position: relative; align-items: center; appearance: none; margin: 0 auto; padding: 0; width: 377px; aspect-ratio: 377 / 78; background: #f2f2f2; border: 2px solid #ddd; border-radius: 3px; outline: none; font-family: Arial, sans-serif; font-size: 15px; cursor: pointer; user-select: none; }
+        button.pow-check > span.pow-check-icon { position: relative; margin: 0 0 0 25px; width: 25px; aspect-ratio: 1; }
+        button.pow-check > span.pow-check-icon:before, button.pow-check > span.pow-check-icon:after { position: absolute; content: ""; }
+        button.pow-check > span.pow-check-icon:before { display: block; left: 0; right: 0; top: 0; bottom: 0; z-index: 1; }
+        button.pow-check > span.pow-check-icon:after { display: none; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 2; }
+        button.pow-check > span.pow-check-icon > span.pow-check-icon-label { position: absolute; overflow: hidden; left: -10000px; top: auto; width: 1px; height: 1px; }
+        button.pow-check > span.pow-check-label { position: relative; margin: 0 15px; flex: 1; }
+        button.pow-check > span.pow-check-label:before { content: "."; opacity: 0; pointer-events: none; }
+        button.pow-check > span.pow-check-label > span { display: block; position: absolute; overflow: hidden; left: 0; right: 0; top: 0; white-space: nowrap; text-align: left; text-overflow: ellipsis; }
+        form.pow-loading button.pow-check > span.pow-check-icon:before, form.pow-resolving button.pow-check > span.pow-check-icon:before { width: calc(100% - 8px); padding: 4px; aspect-ratio: 1; border-radius: 50%; background: #bbb; -webkit-mask: conic-gradient(#0000 10%,#000), linear-gradient(#000 0 0) content-box; mask: conic-gradient(#0000 10%,#000), linear-gradient(#000 0 0) content-box; -webkit-mask-composite: source-out; mask-composite: subtract; animation: pow-spinner 1s infinite linear; }
+        form.pow-resolving button.pow-check > span.pow-check-icon:before { background: #2a9e33; }
+        form.pow-ready button.pow-check > span.pow-check-icon:before { background: white; border: 2px solid #ccc; border-radius: 4px; }
+        form.pow-ready button.pow-check:hover > span.pow-check-icon:before { border-color: #666; }
+        form.pow-resolved button.pow-check > span.pow-check-icon:before, form.pow-error button.pow-check > span.pow-check-icon:before { left: -4px; right: -4px; top: -4px; bottom: -4px; border-radius: 100px; }
+        form.pow-resolved button.pow-check > span.pow-check-icon:after, form.pow-error button.pow-check > span.pow-check-icon:after { display: block; width: 16px; aspect-ratio: 1; background-repeat: no-repeat; background-size: 100%; }
+        form.pow-resolved button.pow-check > span.pow-check-label > span, form.pow-error button.pow-check > span.pow-check-label > span { font-weight: bold; }
+        form.pow-resolved button.pow-check > span.pow-check-icon:before { background: #2a9e33; }
+        form.pow-resolved button.pow-check > span.pow-check-icon:after { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M20.285 2l-11.285 11.567-5.286-5.011-3.714 3.716 9 8.728 15-15.285z'/%3E%3C/svg%3E"); }
+        form.pow-error button.pow-check > span.pow-check-icon:before { background: #dd5959; }
+        form.pow-error button.pow-check > span.pow-check-icon:after { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M23 20.168l-8.185-8.187 8.185-8.174-2.832-2.807-8.182 8.179-8.176-8.179-2.81 2.81 8.186 8.196-8.186 8.184 2.81 2.81 8.203-8.192 8.18 8.192z'/%3E%3C/svg%3E"); }
+        form.pow-loading button.pow-check, form.pow-resolving button.pow-check, form.pow-resolved button.pow-check { pointer-events: none; cursor: default; }
+        @keyframes pow-spinner { to { transform: rotate(1turn); } }
+        CSS;
+    if ($htmlTags) $snippet = '</style>';
+
+    if ($return) return $snippet;
+    echo $snippet;
+    return null;
+}
+
+/**
+ * <USER>
  * Display or returns the JavaScript snippet for the PoW processing.
  * @param  bool        $htmlTags Include <script> and </script>.
  * @param  bool        $return   Return as a string instead of echoing it.
