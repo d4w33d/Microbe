@@ -387,7 +387,7 @@ function render_pow_css(bool $htmlTags = true, bool $return = false, bool $force
     $snippet = '';
     if ($htmlTags) $snippet = '<style>';
     $snippet .= <<<CSS
-        button.pow-check { display: flex; position: relative; align-items: center; appearance: none; margin: 0 auto; padding: 0; width: 377px; aspect-ratio: 377 / 78; background: #f2f2f2; border: 2px solid #ddd; border-radius: 3px; outline: none; font-family: Arial, sans-serif; font-size: 15px; cursor: pointer; user-select: none; }
+        button.pow-check { display: flex; position: relative; align-items: center; appearance: none; margin: 0 auto; padding: 0; width: 377px; aspect-ratio: 377 / 78; background: #f2f2f2; border: 2px solid #ddd; border-radius: 3px; outline: none; font-family: Arial, sans-serif; font-size: 14px; cursor: pointer; user-select: none; }
         button.pow-check > span.pow-check-icon { position: relative; margin: 0 0 0 25px; width: 25px; aspect-ratio: 1; }
         button.pow-check > span.pow-check-icon:before, button.pow-check > span.pow-check-icon:after { position: absolute; content: ""; }
         button.pow-check > span.pow-check-icon:before { display: block; left: 0; right: 0; top: 0; bottom: 0; z-index: 1; }
