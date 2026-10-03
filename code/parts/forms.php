@@ -618,7 +618,7 @@ function render_pow_js(bool $htmlTags = true, bool $return = false, bool $force 
 
         })();
     JAVASCRIPT;
-    $snippet .= '</script>';
+    if ($htmlTags) $snippet .= '</script>';
 
     if ($return) return $snippet;
     echo $snippet;
