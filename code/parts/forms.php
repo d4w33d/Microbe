@@ -479,6 +479,7 @@ function render_pow_js(bool $htmlTags = true, bool $return = false, bool $force 
                 setPayload(payload) {
                     this.$.payload.value = payload;
                     this.$.form.setAttribute("data-pow", payload);
+                    this.$.nonce.value = "";
                 }
 
                 setStatus(status) {
@@ -495,6 +496,11 @@ function render_pow_js(bool $htmlTags = true, bool $return = false, bool $force 
                         this.$.nonce.value = nonce;
                         this.setStatus("resolved");
                     }, 50);
+                }
+
+                renew(payload) {
+                    this.setPayload(payload);
+                    this.runResolve();
                 }
 
                 async resolve(payload) {
@@ -524,15 +530,22 @@ function render_pow_js(bool $htmlTags = true, bool $return = false, bool $force 
 
                 instances: [],
 
-                instance(form) {
+                instance(form, create = true) {
                     for (let i = 0; i < this.instances.length; i++) {
                         if (this.instances[i].isDomElement(form)) {
                             return this.instances[i];
                         }
                     }
 
+                    if (!create) return null;
                     const instance = new MB_Pow(form);
                     this.instances.push(instance);
+                    return instance;
+                },
+
+                renew(form, payload) {
+                    const instance = this.instance(form, false);
+                    if (instance) instance.renew(payload);
                     return instance;
                 },
 
