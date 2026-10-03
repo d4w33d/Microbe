@@ -1807,3 +1807,24 @@ class Microbe_Data_Validation_Error
     }
 
 }
+
+// =============================================================================
+// ---{ Listeners }-------------------------------------------------------------
+
+listen('routes', function(): void
+{
+    route('/core/pow.js', function(): void
+    {
+        header('Content-Type: text/javascript; charset=utf-8');
+        render_pow_js(htmlTags: false);
+        close();
+    });
+    route('/core/pow.css', function(): void
+    {
+        header('Content-Type: text/css; charset=utf-8');
+        render_pow_css(htmlTags: false);
+        close();
+    });
+});
+
+// =============================================================================

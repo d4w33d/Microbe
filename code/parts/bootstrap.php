@@ -86,8 +86,9 @@ function boot(string $ctx = 'web'): void
         dispatch('before_routes');
         dispatch('before_api_routes');
         declare_api_routes();
-        dispatch('before_ctrl_routes');
 
+        dispatch('before_ctrl_routes');
+        dispatch('routes');
         include_root_files('ctrl');
         foreach (get_bundles_files('ctrl') as $f) {
             clear_route_filters();
