@@ -472,6 +472,7 @@ function render_pow_js(bool $htmlTags = true, bool $return = false, bool $force 
                     }
 
                     this.setPayload(payload || this.$.form.getAttribute("data-pow"));
+                    this.setStatus("loading");
 
                     if (this.mode === "idle") this.runResolve();
                 }
