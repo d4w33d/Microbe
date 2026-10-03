@@ -509,7 +509,7 @@ function render_pow_js(bool $htmlTags = true, bool $return = false, bool $force 
                         const nonce = await this.resolve(this.getPayload());
                         this.$.nonce.value = nonce;
                         this.setStatus("resolved");
-                    }, 50);
+                    }, 150);
                 }
 
                 renew(payload) {
