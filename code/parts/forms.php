@@ -379,7 +379,7 @@ function check_pow(
  */
 function render_pow_css(bool $htmlTags = true, bool $return = false, bool $force = false): ?string
 {
-    if (!$return) {
+    if (!$force && !$return) {
         if (stored('core.pow.rendered_css')) return null;
         stored('core.pow.rendered_css', true);
     }
@@ -428,7 +428,7 @@ function render_pow_css(bool $htmlTags = true, bool $return = false, bool $force
  */
 function render_pow_js(bool $htmlTags = true, bool $return = false, bool $force = false): ?string
 {
-    if (!$return) {
+    if (!$force && !$return) {
         if (stored('core.pow.rendered_js')) return null;
         stored('core.pow.rendered_js', true);
     }
@@ -619,6 +619,29 @@ function render_pow_js(bool $htmlTags = true, bool $return = false, bool $force 
         })();
     JAVASCRIPT;
     $snippet .= '</script>';
+
+    if ($return) return $snippet;
+    echo $snippet;
+    return null;
+}
+
+/**
+ * <USER>
+ * Display or returns the HTML tags which includes JS and CSS.
+ * @param  bool        $return   Return as a string instead of echoing it.
+ * @param  bool        $force    Force echoing it even if it's already done.
+ * @return string|null           <link> and <script>
+ */
+function render_pow_dependencies(bool $return = false, bool $force = false): ?string
+{
+    if (!$force && !$return) {
+        if (stored('core.pow.rendered_dependencies')) return null;
+        stored('core.pow.rendered_dependencies', true);
+    }
+
+    $snippet = '<link rel="stylesheet" href="' . url('/core/pow.css') . '">'
+      . "\n" . '<script src="' . url('/core/pow.js') . '" defer></script>'
+      . "\n";
 
     if ($return) return $snippet;
     echo $snippet;
