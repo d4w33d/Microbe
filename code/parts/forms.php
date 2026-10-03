@@ -386,76 +386,116 @@ function render_pow_js(bool $htmlTags = true, bool $return = false, bool $force 
 
     $powDifficulty = MB_POW_DIFFICULTY;
 
+    $labelsJSON = json_encode([
+        'loading'   => t("Loading..."),
+        'ready'     => t("I'm not a robot"),
+        'verifying' => t("Verifying..."),
+        'error'     => t("Unable to confirm you are human"),
+        'success'   => t("Success!"),
+        'check_alt' => t("Click to confirm you are not a robot"),
+    ]);
+
     $snippet = '';
     if ($htmlTags) $snippet = '<script>';
     $snippet .= <<<JAVASCRIPT
         (function() {
+
             if (!window.hasOwnProperty("_mb")) window._mb = {};
-            window._mb.pow = {
 
-                DIFFICULTY: "{$powDifficulty}",
+            class MB_Pow {
 
-                init() {
-                    [...document.querySelectorAll("form[data-pow]")].forEach((form) => {
-                        this.setup(form);
-                    });
-                },
+                constructor(form, payload = null) {
+                    this.labels = $labelsJSON;
+                    this.difficulty = "{$powDifficulty}";
+                    this.mode = "idle";
 
-                setup(form) {
-                    const payload = form.getAttribute("data-pow");
-                    if (!payload) return;
+                    this.$ = { form: form };
 
-                    const bt = form.querySelector("[data-pow-submit]")
-                            || form.querySelector("[type='submit']");
+                    this.$.submit = this.$.form.querySelector("[data-pow-submit]")
+                                 || this.$.form.querySelector("[type='submit']");
 
-                    const msg = form.querySelector("[data-pow-status]");
+                    this.$.payload = this.$.form.querySelector("[data-pow-input-payload]");
+                    if (!this.$.payload) {
+                        this.$.payload = document.createElement("input");
+                        this.$.payload.type = "hidden";
+                        this.$.payload.name = "_mb_pow_payload";
+                        this.$.payload.value = "";
+                        this.$.submit.parentNode.appendChild(this.$.payload);
+                    }
 
-                    const payloadInput = document.createElement("input");
-                    payloadInput.type = "hidden";
-                    payloadInput.name = "_mb_pow_payload";
-                    payloadInput.value = payload;
-                    bt.parentNode.appendChild(payloadInput);
+                    this.$.nonce = this.$.form.querySelector("[data-pow-input-nonce]");
+                    if (!this.$.nonce) {
+                        this.$.nonce = document.createElement("input");
+                        this.$.nonce.type = "hidden";
+                        this.$.nonce.name = "_mb_pow_nonce";
+                        this.$.nonce.value = "";
+                        this.$.submit.parentNode.appendChild(this.$.nonce);
+                    }
 
-                    const nonceInput = document.createElement("input");
-                    nonceInput.type = "hidden";
-                    nonceInput.name = "_mb_pow_nonce";
-                    nonceInput.value = "";
-                    bt.parentNode.appendChild(nonceInput);
+                    this.$.checkContainer = this.$.form.querySelector("[data-pow-check]");
+                    if (this.$.checkContainer) {
+                        this.$.checkContainer.innerHTML = "";
 
-                    if (bt) bt.disabled = true;
-                    form.classList.add("pow-resolving");
+                        this.$.check = document.createElement("button");
+                        this.$.checkContainer.appendChild(this.$.check);
+                        this.$.check.type = "button";
+                        this.$.check.classList.add("pow-check");
+                        this.$.check.addEventListener("click", (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            this.runResolve();
+                        });
+
+                        const check = document.createElement("span");
+                        this.$.check.appendChild(check);
+
+                        const checkLabel = document.createElement("span");
+                        checkLabel.innerText = this.labels.check_alt;
+                        check.appendChild(checkLabel);
+
+                        const checkLabelContainer = document.createElement("span");
+                        this.$.check.appendChild(checkLabelContainer);
+
+                        this.$.checkLabel = document.createElement("span");
+                        this.$.checkLabel.innerText = this.labels.loading;
+                        checkLabelContainer.appendChild(this.$.checkLabel);
+
+                        this.mode = "check";
+                    }
+
+                    this.setPayload(payload || this.$.form.getAttribute("data-pow"));
+
+                    if (this.mode === "idle") this.runResolve();
+                }
+
+                isDomElement(form) {
+                    return this.$.form === form;
+                }
+
+                getPayload() {
+                    return this.$.payload.value;
+                }
+
+                setPayload(payload) {
+                    this.$.payload.value = payload;
+                    this.$.form.setAttribute("data-pow", payload);
+                }
+
+                setStatus(status) {
+                    [ "loading", "ready", "resolving", "resolved", "success", "error" ].forEach((cl) => this.$.form.classList.remove("pow-" + cl));
+                    this.$.form.classList.add("pow-" + status);
+                    if (status === "success" && this.$.submit) this.$.submit.disabled = true;
+                }
+
+                runResolve() {
+                    this.setStatus("resolving");
 
                     setTimeout(async () => {
                         const nonce = await this.resolve(payload);
-                        nonceInput.value = nonce;
-
-                        if (bt) bt.disabled = false;
-                        if (msg) msg.parentNode.removeChild(msg);
-                        form.classList.remove("pow-resolving");
-                        form.classList.add("pow-ready");
+                        this.$.nonce.value = nonce;
+                        this.setStatus("resolved");
                     }, 50);
-                },
-
-                renew(form, payload) {
-                    const payloadInput = form.querySelector("[name='_mb_pow_payload']");
-                    const nonceInput = form.querySelector("[name='_mb_pow_nonce']");
-
-                    if (!payloadInput || !nonceInput) return;
-
-                    payloadInput.value = payload;
-                    nonceInput.value = "";
-
-                    form.classList.add("pow-resolving");
-                    form.classList.remove("pow-ready");
-
-                    setTimeout(async () => {
-                        const nonce = await this.resolve(payload);
-                        nonceInput.value = nonce;
-
-                        form.classList.remove("pow-resolving");
-                        form.classList.add("pow-ready");
-                    }, 50);
-                },
+                }
 
                 async resolve(payload) {
                     let nonce = 0;
@@ -467,13 +507,39 @@ function render_pow_js(bool $htmlTags = true, bool $return = false, bool $force 
                         const hashArray = Array.from(new Uint8Array(buffer));
                         const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
 
-                        if (hashHex.startsWith(this.DIFFICULTY)) return nonce.toString();
+                        if (hashHex.startsWith(this.difficulty)) return nonce.toString();
                         nonce++;
                     }
+                }
+
+            }
+
+            window._mb.pow = {
+
+                init() {
+                    [...document.querySelectorAll("form[data-pow]")].forEach((form) => {
+                        this.instance(form);
+                    });
+                },
+
+                instances: [],
+
+                instance(form) {
+                    for (let i = 0; i < this.instances.length; i++) {
+                        if (this.instances[i].isDomElement(form)) {
+                            return this.instances[i];
+                        }
+                    }
+
+                    const instance = new MB_Pow(form);
+                    this.instances.push(instance);
+                    return instance;
                 },
 
             };
+
             document.addEventListener("DOMContentLoaded", () => window._mb.pow.init());
+
         })();
     JAVASCRIPT;
     $snippet .= '</script>';
