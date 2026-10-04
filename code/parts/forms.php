@@ -1276,6 +1276,10 @@ class Microbe_Form_Field extends Microbe_Form_Element
             $defaultValue = $defaultValue->{$defaultValueGetter}();
         }
 
+        if ($this->getType() === static::T_DATE && is_string($defaultValue) && strlen($defaultValue) > 10) {
+            $defaultValue = substr($defaultValue, 0, 10);
+        }
+
         $this->defaultValue = $defaultValue;
         return $this;
     }
