@@ -791,6 +791,18 @@ class Microbe_Form_Element
         return $fields;
     }
 
+    public function hasFileField(): bool
+    {
+        foreach ($this->getChildren() as $child) {
+            if ($child instanceof Microbe_Form_Field) {
+                if ($child->getType() === Microbe_Form_Field::T_FILE) return true;
+            } else if ($child->hasFileField()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public function setIconFormat(?string $iconFormat = null): static
     {
         $this->iconFormat = $iconFormat;
@@ -971,6 +983,8 @@ class Microbe_Form extends Microbe_Form_Element
         if ($id = $this->getId()) $form->attr('id', $id);
         if ($url = $this->getUrl()) $form->attr('action', url($url));
         if ($method = $this->getMethod()) $form->attr('method', $method);
+        if ($this->hasFileField()) $form->attr('enctype', 'multipart/form-data');
+
         if ($header = $this->getHeader()) dom('div.form-header')->append($header)->appendTo($form);
 
         if ($lastErrorStored = $this->getLastErrorStored()) dom('div.form-error')->appendText($lastErrorStored)->appendTo($form);
