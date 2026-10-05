@@ -1723,6 +1723,13 @@ class Microbe_Form_Result
         return $asObject ? (object) $values : $values;
     }
 
+    public function saveUploadedFile(string $name, string $path): ?string
+    {
+        if (!($f = get_uploaded_file($name))) return null;
+        save_uploaded_file($f, $path);
+        return $path;
+    }
+
 }
 
 // ---{ Class: Microbe Data Validation Response }---
@@ -1781,13 +1788,6 @@ class Microbe_Data_Validation_Response
     public function get(string $name): mixed
     {
         return $this->data[$name] ?? null;
-    }
-
-    public function saveUploadedFile(string $name, string $path): ?string
-    {
-        if (!($f = get_uploaded_file($name))) return null;
-        save_uploaded_file($f, $path);
-        return $path;
     }
 
     public function hasErrors(): bool
