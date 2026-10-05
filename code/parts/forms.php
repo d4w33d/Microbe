@@ -1783,6 +1783,13 @@ class Microbe_Data_Validation_Response
         return $this->data[$name] ?? null;
     }
 
+    public function saveUploadedFile(string $name, string $path): ?string
+    {
+        if (!($f = get_uploaded_file($name))) return null;
+        save_uploaded_file($f, $path);
+        return $path;
+    }
+
     public function hasErrors(): bool
     {
         return !empty($this->errors);
