@@ -1570,7 +1570,7 @@ class Microbe_Form_Field extends Microbe_Form_Element
         $type = $this->getType();
 
         if ($type === static::T_FILE) {
-            return [ null, 'unhandled_yet' ];
+            return $this->processValueValidation(null);
         }
 
         if ($value === null) $value = get($this->getName(), method: $method);
