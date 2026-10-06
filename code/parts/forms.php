@@ -1443,12 +1443,13 @@ class Microbe_Form_Field extends Microbe_Form_Element
         if ($cl = $this->getClasses(target: 'root')) $field->addClasses($cl);
         if ($attrs = $this->getCustomAttributes(target: 'root')) $field->attrs($attrs);
 
-        $lbl = dom('div.field-label')->appendTo($field);
-        if ($iconStr) $lbl->append($this->getForm()->formatIcon($iconStr));
-        if ($lblStr) dom('div')->append($lblStr)->appendTo($lbl);
-
-        if ($cl = $this->getClasses(target: 'label')) $lbl->addClasses($cl);
-        if ($attrs = $this->getCustomAttributes(target: 'label')) $lbl->attrs($attrs);
+        if ($iconStr || $lblStr) {
+            $lbl = dom('div.field-label')->appendTo($field);
+            if ($iconStr) $lbl->append($this->getForm()->formatIcon($iconStr));
+            if ($lblStr) dom('div')->append($lblStr)->appendTo($lbl);
+            if ($cl = $this->getClasses(target: 'label')) $lbl->addClasses($cl);
+            if ($attrs = $this->getCustomAttributes(target: 'label')) $lbl->attrs($attrs);
+        }
 
         $ctrl = dom('div.field-ctrl')->appendTo($field);
         if ($cl = $this->getClasses(target: 'ctrl')) $ctrl->addClasses($cl);
