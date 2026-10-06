@@ -1438,12 +1438,12 @@ class Microbe_Form_Field extends Microbe_Form_Element
         $lblStr = $this->getLabel();
         $iconStr = $this->getIcon();
 
-        $field = dom('div.field')->addClass('field-' . $type);
+        $field = dom('div.field')->addClass('field-' . str_replace('/', '-', $type));
         if (!$lblStr && !$iconStr) $field->addClasses('field-no-label');
         if ($cl = $this->getClasses(target: 'root')) $field->addClasses($cl);
         if ($attrs = $this->getCustomAttributes(target: 'root')) $field->attrs($attrs);
 
-        $lbl = dom('label.field-label')->appendTo($field);
+        $lbl = dom('div.field-label')->appendTo($field);
         if ($iconStr) $lbl->append($this->getForm()->formatIcon($iconStr));
         if ($lblStr) dom('div')->append($lblStr)->appendTo($lbl);
 
