@@ -356,7 +356,7 @@ function get_translations(string $locale, bool $force = false): array
  */
 function set_translation(string $locale, string $format, string $translation, string $bundle = 'default', bool $clear = true): void
 {
-    if (is_env('prod')) return;
+    if (!is_env('dev')) return;
 
     if (!($bundle = get_bundle($bundle))) return;
 
