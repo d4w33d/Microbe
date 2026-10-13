@@ -1251,6 +1251,7 @@ class Microbe_Query_Builder
             } else if ($item['@'] === 'cmp') {
                 $snippet = $item['sql'];
                 foreach ($item['args'] ?? [] as $k => $v) {
+                    if ($v instanceof DateTime) $v = $v->format('Y-m-d H:i:s');
                     $this->arg($argName = ('_auto_cond_' . ($this->whereArgIdx++)), $v);
                     $snippet = str_replace(':' . $k, ':' . $argName, $snippet);
                 }
