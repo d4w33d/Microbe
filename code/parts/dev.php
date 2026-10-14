@@ -253,17 +253,17 @@ function dev_console(): void
             && ($subject = trim(get('subject')))
             && ($message = trim(get('message')))) {
 
-            $preview = get('mode') === 'preview';
+            if (!($preview = (get('mode') === 'preview'))) header('Content-Type: text/plain; charset=utf-8');
 
-            send_email(
-                debug:   $preview,
-                to:      [ 'address' => $to, 'name' => parse_email_address($to)->name ],
-                subject: $subject,
-                body:    $message,
+            $result = send_email(
+                debug:     $preview,
+                debugSend: true,
+                to:        [ 'address' => $to, 'name' => parse_email_address($to)->name ],
+                subject:   $subject,
+                body:      $message,
             );
 
-            $msg = "Email sent";
-            $err = null;
+            exit;
         }
         redirect('./', [ 'v' => 'emails', 'e' => $err, 'msg' => $msg ]);
     }
@@ -329,6 +329,12 @@ function dev_console(): void
     $deploy = (object) [ 'git' => (object) [ 'last_commit' => null ] ];
 
     if ($view === 'deploy') $deploy->git->last_commit = get_last_commit();
+
+    // --- Builds --------------------------------------------------------------
+
+    $builds = (object) [];
+
+    if ($view === 'builds') {}
 
     // --- Errors --------------------------------------------------------------
 
@@ -629,6 +635,7 @@ function dev_console(): void
         (object) [ 'name' => 'tasks',    'label' => "Tasks",    'emoji' => '🤖' ],
         (object) [ 'name' => 'sitemap',  'label' => "Sitemap",  'emoji' => '🧭' ],
         (object) [ 'name' => 'deploy',   'label' => "Deploy",   'emoji' => '🚀' ],
+        (object) [ 'name' => 'builds',   'label' => "Builds",   'emoji' => '📦' ],
         (object) [ 'name' => 'errors',   'label' => "Errors",   'emoji' => '💥' ],
         (object) [ 'name' => 'backup',   'label' => "Backup",   'emoji' => '🛟' ],
         (object) [ 'name' => 'security', 'label' => "Security", 'emoji' => '🛡️' ],
@@ -648,6 +655,7 @@ function dev_console(): void
         'backups'           => get_backuped_files(),
         'security'          => $security,
         'deploy'            => $deploy,
+        'builds'            => $builds,
         'errors'            => $errors,
         'emails'            => $emails,
         'tasks'             => $tasks,
@@ -1730,6 +1738,12 @@ function dev_render_console(array $vars): void
                                     </dl>
                                 </fieldset>
                             <?php endif; ?>
+
+                        <?php elseif ($view === 'builds'): ?>
+
+                            <fieldset>
+                                <legend><h2>📦 Builds</h2></legend>
+                            </fieldset>
 
                         <?php elseif ($view === 'errors'): ?>
 
