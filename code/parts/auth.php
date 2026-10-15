@@ -106,13 +106,8 @@ function register_not_logged_in_redirect(?string $redirect = null): void
  */
 function get_logged_in_user(): mixed
 {
-    if (!($token = get_auth_token())) {
-        return null;
-    }
-
-    if (!($getter = cfg('@core.user_getter'))) {
-        throw new Microbe_Exception("User getter is not defined");
-    }
+    if (!($token = get_auth_token())) return null;
+    if (!($getter = cfg('~@core.user_getter'))) return null;
 
     try {
         return $getter($token);
