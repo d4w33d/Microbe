@@ -418,7 +418,7 @@ listen('routes', function(): void
 
     route('/static-auth/login', function(): void
     {
-        if (is_static_user_logged_in()) redirect('/');
+        if (is_static_user_logged_in()) redirect('?/');
 
         if (is_post()) {
             if (($username = get_nullable_str('username'))
