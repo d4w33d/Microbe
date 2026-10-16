@@ -137,8 +137,8 @@ function is_logged_in(): bool
  *   - $redirect = ':json': a JSON error with 'unauthorized' as message
  *                          will be echoed.
  *   - $redirect is different: the user will be redirected to this URL.
- * @param  string|null $redirect [description]
- * @return mixed                 [description]
+ * @param  string|null $redirect Redirect info.
+ * @return mixed                 Something representing the user, if logged in.
  */
 function assert_logged_in(?string $redirect = null): mixed
 {
@@ -218,6 +218,35 @@ function get_static_logged_in_user(): ?object
 function is_static_user_logged_in(): bool
 {
     return get_static_logged_in_user() !== null;
+}
+/**
+ * <USER>
+ * Check if the static user is logged in.
+ * If yes, the user object will be returned. If not, three cases:
+ *   - $redirect is null: the user will get a HTTP 403 error.
+ *   - $redirect = ':login': the user will be redirected to the login page.
+ *   - $redirect = ':json': a JSON error with 'unauthorized' as message
+ *                          will be echoed.
+ *   - $redirect is different: the user will be redirected to this URL.
+ * @param  string|null $redirect Redirect info.
+ * @return object|null           User object if logged in.
+ */
+function assert_static_user_logged_in(?string $redirect = null): ?object
+{
+    if ($user = get_static_logged_in_user()) {
+        return $user;
+    }
+
+    if ($redirect === null) {
+        throw_403();
+    } else if ($redirect === ':login') {
+        redirect('/static-auth/login', [ 'after' => url('.') ]);
+    } else if ($redirect === ':json') {
+        json_error('unauthorized');
+    }
+
+    redirect($redirect);
+    return null;
 }
 
 /**
