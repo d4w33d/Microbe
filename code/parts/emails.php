@@ -374,6 +374,11 @@ listen('register_email_carrier', function(): void
                 password: $cfg->password ?? null,
             );
 
+            if ($opts->debugSend) {
+                var_dump($response);
+                exit;
+            }
+
             return true;
         },
     );
@@ -404,6 +409,11 @@ listen('register_email_carrier', function(): void
                 username: 'api',
                 password: $cfg->api_key ?? null,
             );
+
+            if ($opts->debugSend) {
+                var_dump($response);
+                exit;
+            }
 
             if (!$response || !($response->id ?? null)) throw new Microbe_Exception("Error while sending email through Mailgun API: " . print_r($response, true));
             return true;
