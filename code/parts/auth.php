@@ -338,7 +338,7 @@ function render_static_auth_login(): void
             body { align-items: center; justify-content: center; background: black; color: #eee; }
             body, input, button { line-height: 1; font-family: monospace; }
             .sr { position: absolute; overflow: hidden; left: -10000px; top: auto; width: 1px; height: 1px; }
-            #g { position: relative; padding: 2rem; background: #111; border-radius: 5px; }
+            #g { position: relative; margin: 0 auto; padding: 2rem; width: 300px; max-width: calc(100% - 2rem); background: #111; border-radius: 5px; }
             #g > #b { position: absolute; left: 0; bottom: calc(100% + 1rem); }
             #g > #b:before { display: block; aspect-ratio: 1; width: 1.75rem; background-size: 100%; content: ""; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='white' stroke-linecap='round' stroke-linejoin='round' stroke-width='2'%3E%3Cpath data-name='Right' d='m7.6 7-5.1 5 5.1 5'/%3E%3Cpath d='M21.5 12H4.8'/%3E%3C/g%3E%3C/svg%3E"); }
             #g > form { display: block; margin: 0; padding: 0; }
@@ -347,9 +347,9 @@ function render_static_auth_login(): void
             #g > form > .f > label:before { display: block; aspect-ratio: 1; width: 1.75rem; background-size: 100%; content: ""; }
             #g > form > .f > label[for="username"]:before { background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg' fill='white'%3E%3Cpath d='M21 2a9 9 0 0 0-8.6 11.6L2 24v6h6l10.4-10.4A9 9 0 1 0 21 2m0 16-2-.3-1.2-.3-.8.8-3.2 3.2-1.4-1.4-1.4 1.4 1.4 1.4-1.6 1.6L9.4 23 8 24.4l1.4 1.4L7.2 28H4v-3.2l9.8-9.8.8-.8-.3-1.2a7 7 0 1 1 6.7 5'/%3E%3Ccircle cx='22' cy='10' r='2'/%3E%3Cpath data-name='&lt;Transparent Rectangle&gt;' fill='none' d='M0 0h32v32H0z'/%3E%3C/svg%3E"); }
             #g > form > .f > label[for="password"]:before { background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12.2 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10M3 22a9.7 9.7 0 0 1 9-7c4.12 0 7.63 2.91 9 7' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
-            #g > form > .f > input { display: block; margin: 0; padding: 8px; flex: 1; background: none; border: 1px solid white; outline: none; color: #eee; }
+            #g > form > .f > input { display: block; margin: 0; padding: 8px; flex: 1; width: 100%; background: none; border: 1px solid white; outline: none; color: #eee; }
             #g > form > .s { display: block; }
-            #g > form > .s > button { display: flex; appearance: none; margin: 0; width: 100%; background: none; border: none; outline: none; cursor: pointer; }
+            #g > form > .s > button { display: flex; justify-content: end; appearance: none; margin: 0; width: 100%; background: none; border: none; outline: none; cursor: pointer; }
             #g > form > .s > button:before { display: block; aspect-ratio: 1; width: 1.75rem; background-size: 100%; content: ""; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='m4 12.6 5 4.9 11-11' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
         </style>
     </head>
