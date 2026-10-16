@@ -329,6 +329,8 @@ function render_static_auth_login(): void
     ?>
     <html>
     <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Sign In</title>
         <style>
             * { box-sizing: border-box; }
