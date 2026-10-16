@@ -337,7 +337,7 @@ function render_static_auth_login(): void
             html, body { display: flex; flex: 1; margin: 0; padding: 0; min-height: 100%; }
             body { align-items: center; justify-content: center; background: black; color: #eee; }
             body, input, button { line-height: 1; font-family: monospace; }
-            .sr { position; absolute; overflow: hidden; left: -10000px; top: auto; width: 1px; height: 1px; }
+            .sr { position: absolute; overflow: hidden; left: -10000px; top: auto; width: 1px; height: 1px; }
             #g { position: relative; padding: 1rem; background: #111; border-radius: 5px; }
             #g > #b { position: absolute; left: 0; bottom: calc(100% + 1rem); }
             #g > #b:before { display: block; aspect-ratio: 1; width: 1.75rem; background-size: 100%; content: ""; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='white' stroke-linecap='round' stroke-linejoin='round' stroke-width='2'%3E%3Cpath data-name='Right' d='m7.6 7-5.1 5 5.1 5'/%3E%3Cpath d='M21.5 12H4.8'/%3E%3C/g%3E%3C/svg%3E"); }
