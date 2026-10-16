@@ -133,7 +133,7 @@ function dev_console(): void
     if ($do === 'auth.static.create_user') {
         if (($username = get_nullable_str('username')) && ($password = get_nullable_str('password'))) {
             add_static_user($username, $password);
-            redirect('./', [ 'v' => 'auth', 'msg' => "Created " . $username ]);
+            redirect('./', [ 'v' => 'auth', 'msg' => "Created static user " . $username ]);
         } else {
             redirect('./', [ 'v' => 'auth', 'e' => "Missing username or password" ]);
         }
@@ -142,7 +142,7 @@ function dev_console(): void
     if ($do === 'auth.static.delete_user') {
         if ($username = get_nullable_str('username')) {
             remove_static_user($username);
-            redirect('./', [ 'v' => 'auth', 'msg' => "Removed " . $username ]);
+            redirect('./', [ 'v' => 'auth', 'msg' => "Removed static user " . $username ]);
         } else {
             redirect('./', [ 'v' => 'auth', 'e' => "Missing username" ]);
         }

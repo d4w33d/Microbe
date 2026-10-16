@@ -324,6 +324,41 @@ function add_static_user(string $username, string $password): void
     store_static_users($users);
 }
 
+function render_static_auth_login(): void
+{
+    ?>
+    <html>
+    <head>
+        <title>Sign In</title>
+        <style>
+            * { box-sizing: border-box; }
+            :root, html, input { font-size: 14px; }
+            ::selection { background: #eee; color: black; }
+            html, body { display: flex; flex: 1; margin: 0; padding: 0; min-height: 100%; }
+            body { align-items: center; justify-content: center; background: black; color: #eee; }
+            body, input { font-family: monospace; }
+            #g { padding: 15px; background: #111; border-radius: 5px; }
+            #g > a {}
+            #g > form { display: block; margin: 0; padding: 0; }
+            #g > form > div {}
+            #g > form > label {}
+            #g > form > input { padding: 10px; width: 100%; border: 1px solid white; }
+        </style>
+    </head>
+    <body>
+        <div id="g">
+            <a href="<?php _url('/'); ?>" id="b"><span>Back</span></a>
+            <form action="<?php _url('.'); ?>" method="post">
+                <div> <label for="username">User</label> <input type="text" name="username"> </div>
+                <div> <label for="password">Password</label> <input type="password" name="password"> </div>
+                <button type="submit"><span>OK</span></button>
+            </form>
+        </div>
+    </body>
+    </html>
+    <?php
+}
+
 // =============================================================================
 // ---{ Listeners }-------------------------------------------------------------
 
@@ -335,6 +370,16 @@ listen('before_first_render', function(): void
         'static_logged_in_user' => ($staticUser = get_static_logged_in_user()),
         'static_is_logged_in'   => (bool) $staticUser,
     ]);
+});
+
+listen('routes', function(): void
+{
+    route('/static-auth/login', function(): void
+    {
+        header('Content-Type: text/html; charset=utf-8');
+        render_static_auth_login();
+        close();
+    });
 });
 
 // =============================================================================
