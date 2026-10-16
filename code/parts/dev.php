@@ -2019,19 +2019,17 @@ function dev_render_console(array $vars): void
                                                 <?php endforeach; ?>
                                             </tbody>
                                         </table>
-
-                                        <div class="inline-form-container">
-                                            <div>Create static user with</div>
-                                            <form action="<?php _url('./', [ 'do' => 'auth.static.create_user' ]); ?>" class="inline-form" method="post">
-                                                <div> <span>username =</span> <input type="text" name="username" spellcheck="false" autocomplete="off" placeholder="(username)"> </div>
-                                                <div> <span>password =</span> <input type="text" name="password" spellcheck="false" autocomplete="off" placeholder="(password)"> </div>
-                                                <button type="submit">Create</button>
-                                            </form>
-                                        </div>
-
                                     <?php else: ?>
                                         <p>No static user created yet.</p>
                                     <?php endif; ?>
+                                    <div class="inline-form-container">
+                                        <div>Create static user with</div>
+                                        <form action="<?php _url('./', [ 'do' => 'auth.static.create_user' ]); ?>" class="inline-form" method="post">
+                                            <div> <span>username =</span> <input type="text" name="username" spellcheck="false" autocomplete="off" placeholder="(username)"> </div>
+                                            <div> <span>password =</span> <input type="text" name="password" spellcheck="false" autocomplete="off" placeholder="(password)"> </div>
+                                            <button type="submit">Create</button>
+                                        </form>
+                                    </div>
                                 <?php else: ?>
                                     <p>Static authentication is disabled.</p>
                                 <?php endif; ?>
