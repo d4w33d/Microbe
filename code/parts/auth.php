@@ -332,17 +332,18 @@ function render_static_auth_login(): void
         <title>Sign In</title>
         <style>
             * { box-sizing: border-box; }
-            :root, html, input { font-size: 14px; }
+            :root, html, input, button { font-size: 14px; }
             ::selection { background: #eee; color: black; }
             html, body { display: flex; flex: 1; margin: 0; padding: 0; min-height: 100%; }
             body { align-items: center; justify-content: center; background: black; color: #eee; }
-            body, input { font-family: monospace; }
+            body, input, button { font-family: monospace; }
             #g { padding: 15px; background: #111; border-radius: 5px; }
             #g > a {}
             #g > form { display: block; margin: 0; padding: 0; }
-            #g > form > div {}
-            #g > form > label {}
-            #g > form > input { padding: 10px; width: 100%; border: 1px solid white; }
+            #g > form > div { margin: 0 0 15px 0; }
+            #g > form > label { display: block; }
+            #g > form > input { display: block; margin: 0; padding: 10px; width: 100%; background: none; border: 1px solid white; outline: none; color: #eee; }
+            #g > form > button { appearance: none; margin: 0 0 0 auto;  padding: 10px; background: white; border: none; color: black; font-weight: bold; cursor; pointer; }
         </style>
     </head>
     <body>
