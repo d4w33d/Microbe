@@ -151,12 +151,14 @@ function dev_console(): void
     $auth = (object) [
         'static' => (object) [
             'is_enabled' => null,
+            'logged_in'  => null,
             'users'      => [],
         ],
     ];
 
     if ($view === 'auth') {
         $auth->static->is_enabled = is_static_auth_enabled();
+        $auth->static->logged_in = get_static_logged_in_user();
         $auth->static->users = get_static_users(processed: true);
     }
 
@@ -2005,6 +2007,7 @@ function dev_render_console(array $vars): void
                                                     <th class="fit">#️ UID</th>
                                                     <th class="fit">🔑 Token</th>
                                                     <th>👤 Username</th>
+                                                    <th class="fit">🟢 Auth</th>
                                                     <th class="fit">🗑️ Delete</th>
                                                 </tr>
                                             </thead>
@@ -2014,6 +2017,7 @@ function dev_render_console(array $vars): void
                                                         <td class="fit selectable"><?php _esc($u->uid); ?></td>
                                                         <td class="fit selectable"><?php _esc($u->token); ?></td>
                                                         <td class="selectable"><strong><?php _esc($u->username); ?></strong></td>
+                                                        <td class="fit"><?php if ($u->uid === $auth->static->logged_in?->uid): ?>🟢<?php endif; ?></td>
                                                         <td class="lnk"><a href="<?php _url('./', [ 'do' => 'auth.static.delete_user', 'username' => $u->username ]); ?>">🗑️ Delete</a></td>
                                                     </tr>
                                                 <?php endforeach; ?>
@@ -2022,6 +2026,7 @@ function dev_render_console(array $vars): void
                                     <?php else: ?>
                                         <p>No static user created yet.</p>
                                     <?php endif; ?>
+                                    <hr>
                                     <div class="inline-form-container">
                                         <div>Create static user with</div>
                                         <form action="<?php _url('./', [ 'do' => 'auth.static.create_user' ]); ?>" class="inline-form" method="post">
@@ -2030,6 +2035,9 @@ function dev_render_console(array $vars): void
                                             <button type="submit">Create</button>
                                         </form>
                                     </div>
+                                    <hr>
+                                    <a href="<?php _url('/static-auth/login', [ 'after' => url('.') ]); ?>" class="bt">⚙️ Sign In</a>
+                                    <a href="<?php _url('/static-auth/logout', [ 'after' => url('.') ]); ?>" class="bt">👁️ Sign Out</a>
                                 <?php else: ?>
                                     <p>Static authentication is disabled.</p>
                                 <?php endif; ?>
