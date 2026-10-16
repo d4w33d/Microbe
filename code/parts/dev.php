@@ -2002,18 +2002,18 @@ function dev_render_console(array $vars): void
                                         <table>
                                             <thead>
                                                 <tr>
-                                                    <th>#️ UID</th>
-                                                    <th>🔑 Token</th>
+                                                    <th class="fit">#️ UID</th>
+                                                    <th class="fit">🔑 Token</th>
                                                     <th>👤 Username</th>
-                                                    <th>🗑️ Delete</th>
+                                                    <th class="fit">🗑️ Delete</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 <?php foreach ($auth->static->users as $u): ?>
                                                     <tr>
-                                                        <td><?php _esc($u->uid); ?></td>
-                                                        <td><?php _esc($u->token); ?></td>
-                                                        <td><?php _esc($u->username); ?></td>
+                                                        <td class="fit selectable"><?php _esc($u->uid); ?></td>
+                                                        <td class="fit selectable"><?php _esc($u->token); ?></td>
+                                                        <td class="selectable"><strong><?php _esc($u->username); ?></strong></td>
                                                         <td class="lnk"><a href="<?php _url('./', [ 'do' => 'auth.static.delete_user', 'username' => $u->username ]); ?>">🗑️ Delete</a></td>
                                                     </tr>
                                                 <?php endforeach; ?>
