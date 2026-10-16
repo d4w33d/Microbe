@@ -158,14 +158,181 @@ function assert_logged_in(?string $redirect = null): mixed
     return null;
 }
 
+/**
+ * Check if static authentication is enabled.
+ * @return bool Is it enabled or not?
+ */
+function is_static_auth_enabled(): bool
+{
+    return (bool) cfg('~@auth.static.enabled');
+}
+
+/**
+ * Returns the static authentication cookie name.
+ * @return string Cookie name.
+ */
+function get_static_auth_cookie_name(): string
+{
+    return cfg('~@core.static_auth_cookie_name') ?: 'MBSA';
+}
+
+/**
+ * Returns the static authentication cookie lifetime.
+ * @return int Lifetime in seconds.
+ */
+function get_static_auth_cookie_lifetime(): int
+{
+    return cfg('~@core.static_auth_cookie_lifetime') ?: 180 * 24 * 60 * 60;
+}
+
+/**
+ * Authenticate a static user.
+ * @param  object $user Static user object (processed).
+ */
+function authenticate_static_user(?object $user): void
+{
+    if (!is_static_auth_enabled()) return;
+    cookie(get_static_auth_cookie_name(), $user === null ? false : $user->token, get_static_auth_cookie_lifetime());
+}
+
+/**
+ * <USER>
+ * Get the logged in static user object.
+ * @return object|null User's object if logged in. Else, null.
+ */
+function get_static_logged_in_user(): ?object
+{
+    if (!is_static_auth_enabled()) return null;
+    if (!($token = cookie(get_static_auth_cookie_name()))) return null;
+    foreach (get_static_users(processed: true) as $u) {
+        if ($u->token === $token) return $u;
+    }
+    return null;
+}
+
+/**
+ * <USER>
+ * Check if a static user is logged in.
+ * @return bool Is logged in or not?
+ */
+function is_static_user_logged_in(): bool
+{
+    return get_static_logged_in_user() !== null;
+}
+
+/**
+ * Returns the path storing the static users.
+ * @return string Path to the JSON file.
+ */
+function get_static_users_file_path(): string
+{
+    return get_data_dir('static_users.json');
+}
+
+/**
+ * <USER>
+ * Get some static user information, by username.
+ * If password is provided, it will be validated.
+ * @param  string      $username Username of the user to get.
+ * @param  string|null $password Password to be validated.
+ * @return object|null           User's object if found and with a
+ *                               valid password, or null.
+ */
+function get_static_user(string $username, ?string $password = null): ?object
+{
+    if ($password !== null) $password = hash_static_user_password($password);
+    foreach (get_static_users(processed: true) as $u) {
+        if ($u->username !== $username) continue;
+        if ($password !== null && $u->password !== $password) return null;
+        return $u;
+    }
+    return null;
+}
+
+/**
+ * <USER>
+ * Returns the list of static users.
+ * @param  bool $processed Process each user to add uid and token,
+ *                         or returns the raw array.
+ * @return array           Array of users arrays (or objects if processed).
+ */
+function get_static_users(bool $processed = false): array
+{
+    if (!is_file($path = get_static_users_file_path())) return [];
+    if (!($users = json_decode(file_get_contents($path), true))) return [];
+    if (!is_array($users)) return [];
+    return $processed ? array_values(array_filter(array_map(function(mixed $u): ?object
+    {
+        if (!is_array($u)) return null;
+        if (count($u) !== 2) return null;
+        if (!isset($u['username']) || !is_string($u['username'])) return null;
+        if (!isset($u['password']) || !is_string($u['username'])) return null;
+        ksort($u);
+        $u['uid'] = sha256($u['username'] . ':' . $u['password']);
+        $u['token'] = sha256($u['uid'] . '::' . get_salt());
+        return (object) $u;
+    }, $users))) : $users;
+}
+
+/**
+ * Store static users array.
+ * @param  array|null $users Store given users. If null or empty,
+ *                           the storage file is deleted.
+ */
+function store_static_users(?array $users = null): void
+{
+    $path = get_static_users_file_path();
+    if (!$users) {
+        if (is_file($path)) unlink($path);
+        return;
+    }
+    file_put_contents($path, json_encode($users));
+}
+
+/**
+ * Hash some static user password.
+ * @param  string $password Password to be hashed.
+ * @return string           Hashed password.
+ */
+function hash_static_user_password(string $password): string
+{
+    return hash_password($password);
+}
+
+/**
+ * <USER>
+ * Remove some static user.
+ * @param  string $username Username of the user to be removed.
+ */
+function remove_static_user(string $username): void
+{
+    store_static_users(array_values(array_filter($users, fn(array $u): bool => $u['username'] !== $username)));
+}
+
+/**
+ * <USER>
+ * Add some static user.
+ * @param string $username Username.
+ * @param string $oassword Password (plain, no hashed).
+ */
+function add_static_user(string $username, string $oassword): void
+{
+    remove_static_user($username);
+    $users = get_static_users();
+    $users[] = [ 'username' => $username, 'password' => hash_static_user_password($password) ];
+    store_static_users($users);
+}
+
 // =============================================================================
 // ---{ Listeners }-------------------------------------------------------------
 
 listen('before_first_render', function(): void
 {
     set_template_vars([
-        'logged_in_user' => ($user = get_logged_in_user()),
-        'is_logged_in'   => (bool) $user,
+        'logged_in_user'        => ($user = get_logged_in_user()),
+        'is_logged_in'          => (bool) $user,
+        'static_logged_in_user' => ($staticUser = get_static_logged_in_user()),
+        'static_is_logged_in'   => (bool) $staticUser,
     ]);
 });
 

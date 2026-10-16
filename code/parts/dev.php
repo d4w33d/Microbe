@@ -128,6 +128,38 @@ function dev_console(): void
         redirect('./', [ 'v' => 'backup', 'msg' => "Backuped" ]);
     }
 
+    // --- Auth ----------------------------------------------------------------
+
+    if ($do === 'auth.static.create_user') {
+        if (($username = get_nullable_str('username')) && ($password = get_nullable_str('password'))) {
+            add_static_user($username, $password);
+            redirect('./', [ 'v' => 'auth', 'msg' => "Created " . $username ]);
+        } else {
+            redirect('./', [ 'v' => 'auth', 'e' => "Missing username or password" ]);
+        }
+    }
+
+    if ($do === 'auth.static.delete_user') {
+        if ($username = get_nullable_str('username')) {
+            remove_static_user($username);
+            redirect('./', [ 'v' => 'auth', 'msg' => "Removed " . $username ]);
+        } else {
+            redirect('./', [ 'v' => 'auth', 'e' => "Missing username" ]);
+        }
+    }
+
+    $auth = (object) [
+        'static' => (object) [
+            'is_enabled' => null,
+            'users'      => [],
+        ],
+    ];
+
+    if ($view === 'auth') {
+        $auth->static->is_enabled = is_static_auth_enabled();
+        $auth->static->users = get_static_users();
+    }
+
     // --- Security ------------------------------------------------------------
 
     $security = (object) [
@@ -638,6 +670,7 @@ function dev_console(): void
         (object) [ 'name' => 'builds',   'label' => "Builds",   'emoji' => '📦' ],
         (object) [ 'name' => 'errors',   'label' => "Errors",   'emoji' => '💥' ],
         (object) [ 'name' => 'backup',   'label' => "Backup",   'emoji' => '🛟' ],
+        (object) [ 'name' => 'auth',     'label' => "Auth",     'emoji' => '🔐' ],
         (object) [ 'name' => 'security', 'label' => "Security", 'emoji' => '🛡️' ],
         (object) [ 'name' => 'server',   'label' => "Server",   'emoji' => '🖥️' ],
     ];
@@ -653,6 +686,7 @@ function dev_console(): void
         'db'                => $db,
         'sql_files'         => ls(get_root_dir(), folders: false, filter: '/\.sql$/i'),
         'backups'           => get_backuped_files(),
+        'auth'              => $auth,
         'security'          => $security,
         'deploy'            => $deploy,
         'builds'            => $builds,
@@ -1958,6 +1992,50 @@ function dev_render_console(array $vars): void
                                     </table>
                                 </fieldset>
                             <?php endif; ?>
+
+                        <?php elseif ($view === 'auth'): ?>
+
+                            <fieldset>
+                                <legend><h2>🔐 Static Authentication</h2></legend>
+                                <?php if ($auth->static->is_enabled): ?>
+                                    <?php if ($auth->static->users): ?>
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th>#️ UID</th>
+                                                    <th>🔑 Token</th>
+                                                    <th>👤 Username</th>
+                                                    <th>🗑️ Delete</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php foreach ($auth->static->users as $u): ?>
+                                                    <tr>
+                                                        <td><?php _esc($u->uid); ?></td>
+                                                        <td><?php _esc($u->token); ?></td>
+                                                        <td><?php _esc($u->username); ?></td>
+                                                        <td class="lnk"><a href="<?php _url('./', [ 'do' => 'auth.static.delete_user', 'username' => $u->username ]); ?>">🗑️ Delete</a></td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            </tbody>
+                                        </table>
+
+                                        <div class="inline-form-container">
+                                            <div>Create static user with</div>
+                                            <form action="<?php _url('./', [ 'do' => 'auth.static.create_user' ]); ?>" class="inline-form" method="post">
+                                                <div> <span>username =</span> <input type="text" name="username" spellcheck="false" autocomplete="off" placeholder="(username)"> </div>
+                                                <div> <span>password =</span> <input type="text" name="password" spellcheck="false" autocomplete="off" placeholder="(password)"> </div>
+                                                <button type="submit">Create</button>
+                                            </form>
+                                        </div>
+
+                                    <?php else: ?>
+                                        <p>No static user created yet.</p>
+                                    <?php endif; ?>
+                                <?php else: ?>
+                                    <p>Static authentication is disabled.</p>
+                                <?php endif; ?>
+                            </fieldset>
 
                         <?php elseif ($view === 'security'): ?>
 
