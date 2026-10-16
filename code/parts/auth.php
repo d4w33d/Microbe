@@ -385,11 +385,31 @@ listen('before_first_render', function(): void
 
 listen('routes', function(): void
 {
+    if (!is_static_auth_enabled()) return;
+
     route('/static-auth/login', function(): void
     {
+        if (is_static_user_logged_in()) redirect('/');
+
+        if (is_post()) {
+            if (($username = get_nullable_str('username'))
+                && ($password = get_nullable_str('password'))
+                && ($user = get_static_user($username, $password))) {
+                authenticate_static_user($user);
+                redirect('?/');
+            }
+            redirect('.');
+        }
+
         header('Content-Type: text/html; charset=utf-8');
         render_static_auth_login();
         close();
+    });
+
+    route('/static-auth/logout', function(): void
+    {
+        authenticate_static_user(null);
+        redirect('?/static-auth/login');
     });
 });
 
