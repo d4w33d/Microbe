@@ -157,7 +157,7 @@ function dev_console(): void
 
     if ($view === 'auth') {
         $auth->static->is_enabled = is_static_auth_enabled();
-        $auth->static->users = get_static_users();
+        $auth->static->users = get_static_users(processed: true);
     }
 
     // --- Security ------------------------------------------------------------
