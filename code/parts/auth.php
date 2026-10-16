@@ -316,7 +316,7 @@ function remove_static_user(string $username): void
  * @param string $username Username.
  * @param string $oassword Password (plain, no hashed).
  */
-function add_static_user(string $username, string $oassword): void
+function add_static_user(string $username, string $password): void
 {
     remove_static_user($username);
     $users = get_static_users();
