@@ -306,7 +306,8 @@ function hash_static_user_password(string $password): string
  */
 function remove_static_user(string $username): void
 {
-    store_static_users(array_values(array_filter($users, fn(array $u): bool => $u['username'] !== $username)));
+    store_static_users(array_values(array_filter(get_static_users(),
+        fn(array $u): bool => $u['username'] !== $username)));
 }
 
 /**
