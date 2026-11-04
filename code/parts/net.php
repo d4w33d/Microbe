@@ -187,9 +187,14 @@ function curl(
     if ($userAgent === true) $userAgent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0 Safari/537.36';
     if ($userAgent) $opts[CURLOPT_USERAGENT] = $userAgent;
 
+    $opts[CURLOPT_SSLVERSION] = CURL_SSLVERSION_TLSv1_2;
+
     if ($verifyCertificate) {
         $opts[CURLOPT_SSL_VERIFYHOST] = false;
         $opts[CURLOPT_SSL_VERIFYPEER] = false;
+    } else {
+        $opts[CURLOPT_SSL_VERIFYPEER] = true;
+        $opts[CURLOPT_SSL_VERIFYHOST] = 2;
     }
 
     if ($maxRedirs > 0) {
@@ -197,7 +202,11 @@ function curl(
         $opts[CURLOPT_MAXREDIRS] = $maxRedirs;
     }
 
-    if ($username) $opts[CURLOPT_USERPWD] = $username . ':' . ($password ?: '');
+    if ($username) {
+        $opts[CURLOPT_USERPWD] = $username . ':' . ($password ?: '');
+        $opts[CURLOPT_HTTPAUTH] = CURLAUTH_BASIC;
+    }
+
     if ($headers) $opts[CURLOPT_HTTPHEADER] = $headers;
 
     if ($cookies) {
