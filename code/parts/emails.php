@@ -375,7 +375,14 @@ listen('register_email_carrier', function(): void
             );
 
             if ($opts->debugSend) {
+                echo "[reponse]\n";
                 var_dump($response);
+                echo "[curl_last_error]\n";
+                var_dump(curl_last_error());
+                echo "[curl_last_info]\n";
+                var_dump(curl_last_info());
+                echo "[curl_last_response]\n";
+                var_dump(curl_last_response());
                 exit;
             }
 
@@ -411,7 +418,14 @@ listen('register_email_carrier', function(): void
             );
 
             if ($opts->debugSend) {
+                echo "[reponse]\n";
                 var_dump($response);
+                echo "[curl_last_error]\n";
+                var_dump(curl_last_error());
+                echo "[curl_last_info]\n";
+                var_dump(curl_last_info());
+                echo "[curl_last_response]\n";
+                var_dump(curl_last_response());
                 exit;
             }
 
