@@ -117,7 +117,7 @@ function is_uid(mixed $value, int | array $len = 64): bool
 function is_uuid(mixed $uuid): bool
 {
     if (!is_string($uuid)) return false;
-    return preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $uuid);
+    return (bool) preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $uuid);
 }
 
 /**
