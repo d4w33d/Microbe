@@ -110,6 +110,18 @@ function is_uid(mixed $value, int | array $len = 64): bool
 
 /**
  * <USER>
+ * Check if some value is a valid UUID string.
+ * @param  mixed   $uuid Probably a UUID.
+ * @return boolean       Is $uuid a UUID or not.
+ */
+function is_uuid(mixed $uuid): bool
+{
+    if (!is_string($uuid)) return false;
+    return preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $uuid);
+}
+
+/**
+ * <USER>
  * Returns special characters list as a string.
  * @return string
  */
