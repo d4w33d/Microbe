@@ -553,7 +553,8 @@ function get_user_agent(): ?string
  */
 function get_query_params(bool $questionMark = true): string
 {
-    return preg_match('/^[^?]*\?(.+)$/', get_request_url(), $m) ? $m[1] : '';
+    $qs = preg_match('/^[^?]*\?(.+)$/', get_request_url(), $m) ? $m[1] : '';
+    return ($questionMark && $qs ? '?' : '') . $qs;
 }
 
 /**
