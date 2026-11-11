@@ -54,9 +54,10 @@ function parse_coordinate_query(string $q): ?object
 
     $processColumn = function(string $k) use (&$c, $m): void
     {
+        $hemi = $k === 'one' ? 'lat' : 'lon';
         if (is_numeric($m[$k])) {
-            $c->lat = (float) $m[$k];
-            if ($c->lat >= -180 && $c->lat <= -180) $c->lat = null;
+            $c->$hemi = (float) $m[$k];
+            if ($c->$hemi >= -180 && $c->$hemi <= -180) $c->$hemi = null;
         } else if ($coord = parse_dms_coordinate($m[$k])) {
             [ $type, $val ] = $coord;
             $c->$type = $val;
