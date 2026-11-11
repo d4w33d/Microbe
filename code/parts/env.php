@@ -546,6 +546,18 @@ function get_user_agent(): ?string
 
 /**
  * <USER>
+ * Returns current's request query string.
+ * @param  bool    $questionMark Include question mark if query
+ *                               string is not empty.
+ * @return string                Query string with or without question mark.
+ */
+function get_query_params(bool $questionMark = true): string
+{
+    return preg_match('/^[^?]*\?(.+)$/', get_request_url(), $m) ? $m[1] : '';
+}
+
+/**
+ * <USER>
  * Get the variable given in argument from the POST or GET data.
  * If the argument is an array of variable names, an associative array
  * will be returned with all the corresponding values from POST or GET.
